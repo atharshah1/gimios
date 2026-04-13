@@ -3,9 +3,11 @@ import time
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from jose import JWTError
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.redis import redis_client
+from app.core.security import decode_token
 
 logger = logging.getLogger("gimios.security")
 
@@ -15,9 +17,23 @@ class RateLimitAndAuditMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.limit = limit_per_minute
 
-    async def dispatch(self, request: Request, call_next):
+    def _request_actor(self, request: Request) -> str:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            try:
+                payload = decode_token(token)
+                user_id = payload.get("sub")
+                if user_id:
+                    return f"user:{user_id}"
+            except JWTError:
+                pass
         ip = request.client.host if request.client else "unknown"
-        key = f"ratelimit:{ip}:{int(time.time() // 60)}"
+        return f"ip:{ip}"
+
+    async def dispatch(self, request: Request, call_next):
+        actor = self._request_actor(request)
+        key = f"ratelimit:{actor}:{int(time.time() // 60)}"
         try:
             count = await redis_client.incr(key)
             if count == 1:
@@ -37,7 +53,7 @@ class RateLimitAndAuditMiddleware(BaseHTTPMiddleware):
                 "method": request.method,
                 "path": request.url.path,
                 "status": response.status_code,
-                "ip": ip,
+                "actor": actor,
                 "duration_ms": elapsed,
             },
         )

@@ -20,7 +20,11 @@ class EventBus:
 
     def __init__(self) -> None:
         self._events: list[DomainEvent] = []
-        self.channel = "gimios:events"
+        self.global_channel = "gimios:events"
+
+    @staticmethod
+    def gym_channel(gym_id: str) -> str:
+        return f"gimios:{gym_id}:events"
 
     async def emit(self, event: str, gym_id: str, entity_id: str, action: str) -> DomainEvent:
         payload = DomainEvent(
@@ -32,7 +36,9 @@ class EventBus:
         )
         self._events.append(payload)
         try:
-            await redis_client.publish(self.channel, json.dumps(asdict(payload)))
+            serialized = json.dumps(asdict(payload))
+            await redis_client.publish(self.global_channel, serialized)
+            await redis_client.publish(self.gym_channel(gym_id), serialized)
         except Exception:
             pass
         return payload

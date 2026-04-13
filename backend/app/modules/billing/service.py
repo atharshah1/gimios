@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.middlewares.auth_context import AuthContext
 from app.core.config import settings
 from app.core.events import event_bus
+from app.core.redis import redis_client
 from app.models.payment import Payment, PaymentStatus
 from app.models.subscription import Subscription
 from app.modules.billing.schema import (
@@ -164,9 +165,16 @@ class BillingService:
             key_id=settings.RAZORPAY_KEY_ID,
         )
 
-    async def handle_razorpay_webhook(self, signature: str, raw_body: str, payload: dict) -> None:
+    async def process_razorpay_webhook(self, signature: str, raw_body: str, payload: dict, event_id: str | None = None) -> bool:
         if self.client is None:
             raise HTTPException(status_code=503, detail="Razorpay is not configured")
+
+        dedupe_key = f"webhook:razorpay:{event_id}" if event_id else None
+        if dedupe_key:
+            is_new = await redis_client.set(dedupe_key, "1", ex=60 * 60 * 24, nx=True)
+            if not is_new:
+                return False
+
         body = payload if isinstance(payload, dict) else {}
         try:
             self.client.utility.verify_webhook_signature(raw_body, signature, settings.RAZORPAY_WEBHOOK_SECRET)
@@ -178,12 +186,12 @@ class BillingService:
         payment_id = entity.get("id")
         status = entity.get("status", "").lower()
         if not order_id:
-            return
+            return True
 
         result = await self.db.execute(select(Payment).where(Payment.gateway_order_id == order_id))
         payment = result.scalar_one_or_none()
         if payment is None:
-            return
+            return True
 
         mapped = PaymentStatus.pending
         if status == "captured":
@@ -196,3 +204,4 @@ class BillingService:
         payment.gateway_payment_id = payment_id
         await self.db.commit()
         await event_bus.emit("billing:changed", str(payment.gym_id), str(payment.id), "updated")
+        return True

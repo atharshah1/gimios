@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.middlewares.auth_context import AuthContext, require_auth_context
@@ -73,13 +73,17 @@ async def create_checkout_session(
 @router.post("/webhooks/razorpay", response_model=ApiResponse[dict])
 async def razorpay_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     x_razorpay_signature: str = Header(alias="X-Razorpay-Signature"),
+    x_razorpay_event_id: str | None = Header(default=None, alias="X-Razorpay-Event-Id"),
     db: AsyncSession = Depends(get_db),
 ):
     raw_body = (await request.body()).decode("utf-8")
     payload = await request.json()
-    await BillingService(db).handle_razorpay_webhook(x_razorpay_signature, raw_body, payload)
-    return success_response({"processed": True})
+
+    service = BillingService(db)
+    background_tasks.add_task(service.process_razorpay_webhook, x_razorpay_signature, raw_body, payload, x_razorpay_event_id)
+    return success_response({"accepted": True})
 
 
 @router.get("/status", response_model=ApiResponse[BillingStatus])

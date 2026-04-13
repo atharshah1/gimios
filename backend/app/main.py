@@ -46,4 +46,4 @@ async def health() -> dict:
 
 
 # New contract-aligned modular API routes
-app.include_router(api_router)
+app.include_router(api_router, prefix="/v2")
