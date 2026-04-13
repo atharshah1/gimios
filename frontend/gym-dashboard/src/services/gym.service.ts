@@ -15,10 +15,10 @@ export const gymService = {
     );
   },
   async updateSettings(next: Partial<typeof store.settings>) {
-    await delay();
     store.settings = { ...store.settings, ...next };
     persistStore();
     emit("gym:changed");
+    await delay();
   },
   async getTrainers() {
     return withApiFallback(
@@ -30,7 +30,6 @@ export const gymService = {
     );
   },
   async upsertTrainer(input: Partial<Trainer> & Pick<Trainer, "name">) {
-    await delay();
     if (input.id) {
       store.trainers = store.trainers.map((t) => (t.id === input.id ? { ...t, ...input } as Trainer : t));
     } else {
@@ -46,12 +45,13 @@ export const gymService = {
     }
     persistStore();
     emit("gym:changed");
+    await delay();
   },
   async removeTrainer(id: string) {
-    await delay();
     store.trainers = store.trainers.filter((t) => t.id !== id);
     persistStore();
     emit("gym:changed");
+    await delay();
   },
   async getMembers() {
     return withApiFallback(
@@ -63,7 +63,6 @@ export const gymService = {
     );
   },
   async upsertMember(input: Partial<Member> & Pick<Member, "name">) {
-    await delay();
     if (input.id) {
       store.members = store.members.map((m) => (m.id === input.id ? { ...m, ...input } as Member : m));
     } else {
@@ -78,11 +77,12 @@ export const gymService = {
     }
     persistStore();
     emit("gym:changed");
+    await delay();
   },
   async removeMember(id: string) {
-    await delay();
     store.members = store.members.filter((m) => m.id !== id);
     persistStore();
     emit("gym:changed");
+    await delay();
   },
 };

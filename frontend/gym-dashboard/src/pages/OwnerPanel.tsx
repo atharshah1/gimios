@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, LoadingSkeleton, SectionCard } from "../compone
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
+import { useToast } from "../components/ToastProvider";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useAttendance } from "../hooks/useAttendance";
 import { useBilling } from "../hooks/useBilling";
@@ -22,10 +23,13 @@ export function OwnerPanel({ tab }: { tab: string }) {
   const attendance = useAttendance();
   const billing = useBilling();
   const analytics = useAnalytics();
+  const toast = useToast();
   const [quickName, setQuickName] = useState("");
   const [memberName, setMemberName] = useState("");
   const [slotTitle, setSlotTitle] = useState("New Batch");
+  const [slotDate, setSlotDate] = useState(new Date().toISOString().slice(0, 10));
   const [slotHour, setSlotHour] = useState(7);
+  const [slotTrainerId, setSlotTrainerId] = useState("t1");
   const [paymentAmount, setPaymentAmount] = useState(2500);
   const [formError, setFormError] = useState<string | null>(null);
   const [memberError, setMemberError] = useState<string | null>(null);
@@ -71,6 +75,7 @@ export function OwnerPanel({ tab }: { tab: string }) {
             }
             setFormError(null);
             void gymService.upsertTrainer({ name: quickName.trim() });
+            toast.push("Trainer added");
             setQuickName("");
           }}
         >
@@ -98,6 +103,7 @@ export function OwnerPanel({ tab }: { tab: string }) {
             }
             setMemberError(null);
             void gymService.upsertMember({ name: memberName.trim() });
+            toast.push("Member added");
             setMemberName("");
           }}
         >
@@ -128,20 +134,26 @@ export function OwnerPanel({ tab }: { tab: string }) {
               try {
                 await slotsService.create({
                   title: slotTitle.trim(),
-                  date: "2026-04-14",
+                  date: slotDate,
                   startHour: slotHour,
                   durationMin: 60,
-                  trainerId: ((trainers.data ?? []) as Trainer[])[0]?.id ?? "t1",
+                  trainerId: slotTrainerId,
                   memberIds: ((members.data ?? []) as Member[]).slice(0, 2).map((m) => m.id),
                 });
+                toast.push("Slot created");
               } catch (error) {
                 setSlotError(error instanceof Error ? error.message : "Failed to create slot");
+                toast.push(error instanceof Error ? error.message : "Failed to create slot", "error");
               }
             })();
           }}
         >
           <Input value={slotTitle} onChange={(e) => setSlotTitle(e.target.value)} placeholder="Slot title" />
+          <Input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)} />
           <Input type="number" value={slotHour} onChange={(e) => setSlotHour(Number(e.target.value))} min={0} max={23} placeholder="Start hour" />
+          <select value={slotTrainerId} onChange={(e) => setSlotTrainerId(e.target.value)}>
+            {((trainers.data ?? []) as Trainer[]).map((trainer) => <option key={trainer.id} value={trainer.id}>{trainer.name}</option>)}
+          </select>
           <Button type="submit">Create slot</Button>
           {slotError ? <p className="error-text">{slotError}</p> : null}
         </form>
@@ -190,6 +202,7 @@ export function OwnerPanel({ tab }: { tab: string }) {
             }
             setPaymentError(null);
             void billingService.addPayment(paymentAmount, "pending");
+            toast.push("Payment entry added");
           }}
         >
           <Input type="number" value={paymentAmount} onChange={(e) => setPaymentAmount(Number(e.target.value))} min={1} />

@@ -22,9 +22,9 @@ export const billingService = {
     );
   },
   async addPayment(amount: number, status: "paid" | "pending" | "failed") {
-    await delay();
     store.payments.push({ id: `pay${store.payments.length + 1}`, amount, status, date: new Date().toISOString().slice(0, 10) });
     persistStore();
     emit("billing:changed");
+    await delay();
   },
 };

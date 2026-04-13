@@ -1,7 +1,7 @@
 :root { font-family: Inter, system-ui, sans-serif; }
 body { margin: 0; background: #0b0f0d; color: #f2f7f4; }
 * { box-sizing: border-box; }
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 
 .app-shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
 .sidebar { border-right: 1px solid #223127; padding: 16px; display: flex; flex-direction: column; gap: 8px; background: #101612; }
@@ -20,10 +20,13 @@ button, input { font: inherit; }
 .empty { color: #b8c4bc; }
 .skeleton { animation: pulse 1.2s infinite alternate; }
 @keyframes pulse { from { opacity: .55; } to { opacity: 1; } }
-input { width: 100%; margin: 6px 0; padding: 8px; border-radius: 8px; border: 1px solid #2f3c31; background: #0f1311; color: white; }
+input, select { width: 100%; margin: 6px 0; padding: 8px; border-radius: 8px; border: 1px solid #2f3c31; background: #0f1311; color: white; }
 .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
 .chart-box { background: #141a16; border: 1px solid #253026; border-radius: 12px; padding: 10px; }
 .chart-labels { display: flex; justify-content: space-between; color: #b8c4bc; font-size: 12px; margin-top: 6px; }
 .calendar-grid { display: grid; gap: 4px; margin-top: 12px; }
 .calendar-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; border-top: 1px solid #223127; padding: 6px 0; }
 .error-text { color: #ffb4b4; font-size: 12px; margin: 4px 0 0; }
+.toast-stack { position: fixed; right: 14px; bottom: 14px; display: grid; gap: 8px; z-index: 20; }
+.toast { padding: 10px 12px; border-radius: 8px; border: 1px solid #253026; background: #152117; color: #d8ffd2; }
+.toast.error { background: #2d1616; border-color: #8f3b3b; color: #ffd4d4; }

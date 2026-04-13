@@ -14,7 +14,6 @@ export const attendanceService = {
     );
   },
   async mark(memberId: string, trainerId: string, slotId: string, status: "present" | "absent") {
-    await delay();
     store.attendance.push({
       id: `a${store.attendance.length + 1}`,
       date: new Date().toISOString().slice(0, 10),
@@ -25,5 +24,6 @@ export const attendanceService = {
     });
     persistStore();
     emit("attendance:changed");
+    await delay();
   },
 };

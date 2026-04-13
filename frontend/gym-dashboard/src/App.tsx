@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { LoadingSkeleton } from "./components/StateViews";
+import { ToastProvider } from "./components/ToastProvider";
 import { Button } from "./components/ui/Button";
 import { useAuth } from "./hooks/useAuth";
 import { AppLayout } from "./layouts/AppLayout";
@@ -96,9 +97,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }
