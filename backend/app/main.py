@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, gym, users, hrms, timeslot, attendance, workout, wearable, billing, admin
+from app.api.routes import api_router
 
 app = FastAPI(title="GymOS API", version="0.1.0")
 
@@ -28,3 +29,6 @@ app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+# New contract-aligned modular API routes
+app.include_router(api_router)
