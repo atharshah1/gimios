@@ -27,11 +27,15 @@ export function useSlots() {
   }, [refresh]);
 
   const createSlot = async (slot: Omit<TimeSlot, "id">) => {
+    const optimistic: TimeSlot = { id: `temp-${Date.now()}`, ...slot };
+    setSlots((prev) => [...prev, optimistic]);
+
     try {
       setError(null);
-      await slotsService.createSlot(slot);
-      await refresh();
+      const created = await slotsService.createSlot(slot);
+      setSlots((prev) => prev.map((item) => (item.id === optimistic.id ? created : item)));
     } catch {
+      setSlots((prev) => prev.filter((item) => item.id !== optimistic.id));
       setError("Failed to create slot.");
     }
   };

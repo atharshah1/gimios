@@ -29,21 +29,29 @@ export function useRoster() {
   }, [refresh]);
 
   const addTrainer = async (name: string) => {
+    const optimistic: Trainer = { id: `temp-${Date.now()}`, name };
+    setTrainers((prev) => [...prev, optimistic]);
+
     try {
       setError(null);
-      await rosterService.addTrainer(name);
-      await refresh();
+      const updated = await rosterService.addTrainer(name);
+      setTrainers(updated);
     } catch {
+      setTrainers((prev) => prev.filter((item) => item.id !== optimistic.id));
       setError("Failed to add trainer.");
     }
   };
 
   const addMember = async (name: string) => {
+    const optimistic: Member = { id: `temp-${Date.now()}`, name };
+    setMembers((prev) => [...prev, optimistic]);
+
     try {
       setError(null);
-      await rosterService.addMember(name);
-      await refresh();
+      const updated = await rosterService.addMember(name);
+      setMembers(updated);
     } catch {
+      setMembers((prev) => prev.filter((item) => item.id !== optimistic.id));
       setError("Failed to add member.");
     }
   };

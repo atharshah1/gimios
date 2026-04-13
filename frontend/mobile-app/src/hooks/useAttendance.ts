@@ -27,11 +27,15 @@ export function useAttendance() {
   }, [refresh]);
 
   const markAttendance = async (record: Omit<AttendanceRecord, "id">) => {
+    const optimistic: AttendanceRecord = { id: `temp-${Date.now()}`, ...record };
+    setAttendance((prev) => [...prev, optimistic]);
+
     try {
       setError(null);
-      await attendanceService.markAttendance(record);
-      await refresh();
+      const created = await attendanceService.markAttendance(record);
+      setAttendance((prev) => prev.map((item) => (item.id === optimistic.id ? created : item)));
     } catch {
+      setAttendance((prev) => prev.filter((item) => item.id !== optimistic.id));
       setError("Failed to mark attendance.");
     }
   };
