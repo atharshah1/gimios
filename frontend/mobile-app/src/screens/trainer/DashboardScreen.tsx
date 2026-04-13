@@ -1,12 +1,13 @@
 import React from "react";
 import { Button } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { RootStackParamList } from "../../navigation/types";
 import { Card } from "../../components/Card";
 import { MetricGrid } from "../../components/MetricGrid";
 import { ScreenShell } from "../../components/ScreenShell";
 
 export function DashboardScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   return (
     <ScreenShell title="Trainer Dashboard">
       <Card title="Overview" subtitle="Tuesday · 3 sessions today">

@@ -2,10 +2,12 @@ import React from "react";
 import { Button, Text } from "react-native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
-import { useOps } from "../../contexts/OpsContext";
+import { useAttendance } from "../../hooks/useAttendance";
+import { useSlots } from "../../hooks/useSlots";
 
 export function ScheduleScreen() {
-  const { slots, markAttendance } = useOps();
+  const { slots } = useSlots();
+  const { markAttendance } = useAttendance();
 
   return (
     <ScreenShell title="Schedule">

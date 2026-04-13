@@ -1,19 +1,22 @@
 import React from "react";
 import { Button } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
-import { useRole } from "../../contexts/RoleContext";
-import { useOps } from "../../contexts/OpsContext";
+import { useAttendance } from "../../hooks/useAttendance";
+import { useAuth } from "../../hooks/useAuth";
+import { useSlots } from "../../hooks/useSlots";
+import { RootStackParamList } from "../../navigation/types";
 
 export function ProfileScreen() {
-  const { devSwitchRole } = useRole();
-  const navigation = useNavigation<any>();
-  const { slots, markAttendance } = useOps();
+  const { devSwitchRole, currentUser } = useAuth();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { slots } = useSlots();
+  const { markAttendance } = useAttendance();
 
   return (
     <ScreenShell title="Profile">
-      <Card title="Mike Ryan" subtitle="Pro Member since 2022">
+      <Card title={currentUser?.fullName ?? "Member"} subtitle="Pro Member since 2022">
         <Button title="View Attendance History" onPress={() => navigation.navigate("AttendanceHistory")} />
         {slots[0] ? (
           <Button
@@ -22,7 +25,7 @@ export function ProfileScreen() {
               markAttendance({
                 date: slots[0].date,
                 slot: `${slots[0].time} - ${slots[0].trainer}`,
-                member: "Mike Ryan",
+                member: currentUser?.fullName ?? "Unknown",
                 status: "present",
               })
             }

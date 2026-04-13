@@ -3,11 +3,13 @@ import { Text } from "react-native";
 import { Card } from "../../components/Card";
 import { StateView } from "../../components/StateView";
 import { ScreenShell } from "../../components/ScreenShell";
-import { useOps } from "../../contexts/OpsContext";
+import { useAttendance } from "../../hooks/useAttendance";
+import { useAuth } from "../../hooks/useAuth";
 
 export function AttendanceHistoryScreen() {
-  const { attendance } = useOps();
-  const memberHistory = attendance.filter((record) => record.member === "Mike Ryan");
+  const { attendance } = useAttendance();
+  const { currentUser } = useAuth();
+  const memberHistory = attendance.filter((record) => record.member === currentUser?.fullName);
 
   return (
     <ScreenShell title="Attendance History">

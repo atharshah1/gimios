@@ -2,10 +2,10 @@ import React from "react";
 import { Text } from "react-native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
-import { useOps } from "../../contexts/OpsContext";
+import { useAttendance } from "../../hooks/useAttendance";
 
 export function OwnerAttendanceScreen() {
-  const { attendance } = useOps();
+  const { attendance } = useAttendance();
   return (
     <ScreenShell title="Attendance Overview">
       <Card title="Attendance" subtitle="Owner visibility across slots">

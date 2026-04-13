@@ -1,52 +1,42 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-
-export type AppRole = "gym_owner" | "trainer" | "member";
+import { AppRole, mobileApi, SessionUser } from "../services/api";
 
 type SessionState = {
   role: AppRole | null;
   gymSlug: string | null;
+  currentUser: SessionUser | null;
   loading: boolean;
   error: string | null;
   retry: () => void;
-  devSwitchRole: (role: AppRole) => void;
+  devSwitchRole: (role: AppRole) => Promise<void>;
 };
 
 const RoleContext = createContext<SessionState>({
   role: null,
   gymSlug: null,
+  currentUser: null,
   loading: true,
   error: null,
   retry: () => undefined,
-  devSwitchRole: () => undefined,
+  devSwitchRole: async () => undefined,
 });
-
-function decodeMockJwt(token: string): { role: AppRole; gymSlug: string } {
-  // In production this payload comes from real JWT claims returned by backend auth.
-  if (token === "owner-token") return { role: "gym_owner", gymSlug: "apex-athletics" };
-  if (token === "trainer-token") return { role: "trainer", gymSlug: "apex-athletics" };
-  if (token === "member-token") return { role: "member", gymSlug: "fitme-studio" };
-  throw new Error("Invalid session token");
-}
-
-async function bootstrapSession(): Promise<{ role: AppRole; gymSlug: string }> {
-  // Placeholder async boot flow (SecureStore/AsyncStorage + refresh token) for MVP scaffold.
-  const token = "owner-token";
-  return decodeMockJwt(token);
-}
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [gymSlug, setGymSlug] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
     setError(null);
-    bootstrapSession()
+    mobileApi
+      .fetchSession()
       .then((session) => {
         setRole(session.role);
         setGymSlug(session.gymSlug);
+        setCurrentUser(session);
       })
       .catch(() => {
         setError("Could not restore your session. Please try again.");
@@ -60,9 +50,18 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     load();
   }, []);
 
+  const devSwitchRole = async (nextRole: AppRole) => {
+    setLoading(true);
+    const session = await mobileApi.switchRole(nextRole);
+    setRole(session.role);
+    setGymSlug(session.gymSlug);
+    setCurrentUser(session);
+    setLoading(false);
+  };
+
   const value = useMemo(
-    () => ({ role, gymSlug, loading, error, retry: load, devSwitchRole: setRole }),
-    [error, gymSlug, loading, role],
+    () => ({ role, gymSlug, currentUser, loading, error, retry: load, devSwitchRole }),
+    [currentUser, error, gymSlug, loading, role],
   );
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
