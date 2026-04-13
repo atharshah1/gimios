@@ -3,7 +3,7 @@ import { Button, TextInput } from "react-native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
 import { StateView } from "../../components/StateView";
-import { mobileApi } from "../../services/api";
+import { gymService } from "../../services/gym";
 
 export function OwnerSetupScreen() {
   const [gymName, setGymName] = useState("");
@@ -12,7 +12,7 @@ export function OwnerSetupScreen() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    mobileApi.fetchGymProfile().then((profile) => {
+    gymService.fetchGymProfile().then((profile) => {
       setGymName(profile.gymName);
       setLogoUrl(profile.logoUrl);
       setThemePrimary(profile.themePrimary);
@@ -24,7 +24,7 @@ export function OwnerSetupScreen() {
       setMessage("Gym name must be at least 3 characters.");
       return;
     }
-    await mobileApi.saveGymProfile({ gymName: gymName.trim(), logoUrl, themePrimary });
+    await gymService.saveGymProfile({ gymName: gymName.trim(), logoUrl, themePrimary });
     setMessage("Gym profile saved.");
   };
 

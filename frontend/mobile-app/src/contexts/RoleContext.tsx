@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { AppRole, mobileApi, SessionUser } from "../services/api";
+import { AppRole, SessionUser } from "../services/api";
+import { authService } from "../services/auth";
 
 type SessionState = {
   role: AppRole | null;
@@ -31,7 +32,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const load = () => {
     setLoading(true);
     setError(null);
-    mobileApi
+    authService
       .fetchSession()
       .then((session) => {
         setRole(session.role);
@@ -52,7 +53,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
 
   const devSwitchRole = async (nextRole: AppRole) => {
     setLoading(true);
-    const session = await mobileApi.switchRole(nextRole);
+    const session = await authService.switchRole(nextRole);
     setRole(session.role);
     setGymSlug(session.gymSlug);
     setCurrentUser(session);

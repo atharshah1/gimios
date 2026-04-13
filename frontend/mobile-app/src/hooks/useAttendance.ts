@@ -1,29 +1,38 @@
 import { useCallback, useEffect, useState } from "react";
-import { AttendanceRecord, mobileApi } from "../services/api";
+import { AttendanceRecord } from "../services/types";
+import { attendanceService } from "../services/attendance";
 
 export function useAttendance() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    const data = await mobileApi.listAttendance();
-    setAttendance(data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await attendanceService.listAttendance();
+      setAttendance(data);
+    } catch {
+      setError("Failed to load attendance.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     refresh();
-    const timer = setInterval(() => {
-      refresh();
-    }, 1500);
-    return () => clearInterval(timer);
   }, [refresh]);
 
   const markAttendance = async (record: Omit<AttendanceRecord, "id">) => {
-    await mobileApi.markAttendance(record);
-    await refresh();
+    try {
+      setError(null);
+      await attendanceService.markAttendance(record);
+      await refresh();
+    } catch {
+      setError("Failed to mark attendance.");
+    }
   };
 
-  return { attendance, loading, refresh, markAttendance };
+  return { attendance, loading, error, refresh, markAttendance };
 }

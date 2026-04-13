@@ -7,13 +7,15 @@ import { useAttendance } from "../../hooks/useAttendance";
 import { useAuth } from "../../hooks/useAuth";
 
 export function AttendanceHistoryScreen() {
-  const { attendance } = useAttendance();
+  const { attendance, loading, error } = useAttendance();
   const { currentUser } = useAuth();
-  const memberHistory = attendance.filter((record) => record.member === currentUser?.fullName);
+  const memberHistory = attendance.filter((record) => record.memberId === currentUser?.id);
 
   return (
     <ScreenShell title="Attendance History">
-      {memberHistory.length === 0 ? (
+      {loading ? <StateView title="Loading" description="Loading attendance history..." /> : null}
+      {error ? <StateView title="Error" description={error} /> : null}
+      {!loading && memberHistory.length === 0 ? (
         <StateView title="No attendance yet" description="Attend a booked slot and history appears here." />
       ) : (
         <Card title="Profile → Attendance" subtitle="Date · Slot · Status">

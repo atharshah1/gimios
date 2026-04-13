@@ -6,7 +6,7 @@ import { StateView } from "../../components/StateView";
 import { useRoster } from "../../hooks/useRoster";
 
 export function OwnerMembersScreen() {
-  const { members, addMember } = useRoster();
+  const { members, addMember, loading, error: apiError } = useRoster();
   const [name, setName] = useState("");
   const [error, setError] = useState("");
 
@@ -25,11 +25,13 @@ export function OwnerMembersScreen() {
       <Card title="Create Member" subtitle="Input + validation flow">
         <TextInput placeholder="Member full name" value={name} onChangeText={setName} style={{ borderWidth: 1, padding: 10, borderRadius: 8 }} />
         {error ? <StateView title="Validation" description={error} /> : null}
+        {apiError ? <StateView title="Error" description={apiError} /> : null}
         <Button title="Save Member" onPress={onSubmit} />
       </Card>
       <Card title="Member List" subtitle="Member operations">
+        {loading ? <StateView title="Loading" description="Loading members..." /> : null}
         {members.map((member) => (
-          <Text key={member}>{member}</Text>
+          <Text key={member.id}>{member.name}</Text>
         ))}
       </Card>
     </ScreenShell>

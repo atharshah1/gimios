@@ -1,36 +1,50 @@
 import { useCallback, useEffect, useState } from "react";
-import { mobileApi } from "../services/api";
+import { rosterService } from "../services/roster";
+import { Member, Trainer } from "../services/types";
 
 export function useRoster() {
-  const [trainers, setTrainers] = useState<string[]>([]);
-  const [members, setMembers] = useState<string[]>([]);
+  const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    const [t, m] = await Promise.all([mobileApi.listTrainers(), mobileApi.listMembers()]);
-    setTrainers(t);
-    setMembers(m);
-    setLoading(false);
+    try {
+      setLoading(true);
+      setError(null);
+      const [t, m] = await Promise.all([rosterService.listTrainers(), rosterService.listMembers()]);
+      setTrainers(t);
+      setMembers(m);
+    } catch {
+      setError("Failed to load roster.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     refresh();
-    const timer = setInterval(() => {
-      refresh();
-    }, 1500);
-    return () => clearInterval(timer);
   }, [refresh]);
 
   const addTrainer = async (name: string) => {
-    await mobileApi.addTrainer(name);
-    await refresh();
+    try {
+      setError(null);
+      await rosterService.addTrainer(name);
+      await refresh();
+    } catch {
+      setError("Failed to add trainer.");
+    }
   };
 
   const addMember = async (name: string) => {
-    await mobileApi.addMember(name);
-    await refresh();
+    try {
+      setError(null);
+      await rosterService.addMember(name);
+      await refresh();
+    } catch {
+      setError("Failed to add member.");
+    }
   };
 
-  return { trainers, members, loading, refresh, addTrainer, addMember };
+  return { trainers, members, loading, error, refresh, addTrainer, addMember };
 }
