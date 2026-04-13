@@ -1,100 +1,89 @@
 # GymOS Mobile Architecture & Screen Flow Diagram
 
-This document captures the **React Native mobile information architecture** and **screen flows** for both Trainer and Member apps based on the current product plan and design references.
+This document reflects the implemented navigation architecture using **React Navigation (Native Stack + Bottom Tabs)** and role bootstrapping from session/JWT claims.
 
-## 1) Mobile App Architecture (High Level)
+## 1) Mobile Architecture (Stack + Tabs)
 
 ```mermaid
 flowchart TB
-    A[GymOS Mobile App\nReact Native + Expo] --> B[Auth & Tenant Context]
-    B --> C[Role Switch]
+    A[App.tsx] --> B[RoleProvider]
+    B --> C[Session Bootstrap\nJWT claims: role + gym_slug]
+    C --> D[ThemeProvider\nwhite-label colors per gym]
+    D --> E[NavigationContainer]
+    E --> F[Root Native Stack]
 
-    C --> T[Trainer App Flow]
-    C --> M[Member App Flow]
+    F -->|role=trainer| TABS1[Trainer Bottom Tabs]
+    F -->|role=member| TABS2[Member Bottom Tabs]
 
-    T --> API[FastAPI Monolith API]
-    M --> API
+    TABS1 --> TS1[Dashboard]
+    TABS1 --> TS2[Schedule]
+    TABS1 --> TS3[Clients]
+    TABS1 --> TS4[HRMS]
+    TABS1 --> TS5[Billing]
+    TABS1 --> TS6[Settings]
 
-    API --> MOD1[Auth + RBAC]
-    API --> MOD2[Gym + White-label Theme]
-    API --> MOD3[HRMS + Users]
-    API --> MOD4[Time Slots + Attendance]
-    API --> MOD5[Workout]
-    API --> MOD6[Wearable]
-    API --> MOD7[Billing + Subscription]
+    F --> TD1[Trainer Stack: SessionDetails]
+    F --> TD2[Trainer Stack: ClientProfile]
 
-    API --> DB[(PostgreSQL)]
-    API --> R[(Redis)]
+    TABS2 --> MS1[Home]
+    TABS2 --> MS2[Workouts]
+    TABS2 --> MS3[Nutrition]
+    TABS2 --> MS4[Community]
+    TABS2 --> MS5[Membership]
+    TABS2 --> MS6[Profile]
+
+    F --> MD1[Member Stack: WorkoutDetail]
+    F --> MD2[Member Stack: LiveWorkout]
 ```
 
 ## 2) Trainer Screen Flow
 
 ```mermaid
 flowchart TD
-    TS[Trainer: Welcome / Role Select] --> TA[Create Account]
-    TS --> TL[Sign In]
+    TL[Session Loaded as Trainer] --> TD[Dashboard Tab]
+    TD --> SCH[Schedule Tab]
+    TD --> CL[Clients Tab]
+    TD --> HR[HRMS Tab]
+    TD --> BI[Billing Tab]
+    TD --> ST[Settings Tab]
 
-    TA --> TJ[Join Gym / Invite Code]
-    TL --> TJ
-    TJ --> TD[Trainer Dashboard]
+    SCH --> SD[Session Details Stack Screen]
+    CL --> CP[Client Profile Stack Screen]
 
-    TD --> SCH[Schedule]
-    TD --> CL[Client Directory]
-    TD --> HR[HRMS Hub]
-    TD --> BI[Billing & Invoices]
-    TD --> ST[Settings]
-
-    SCH --> SD[Session Details]
-    SD --> CI[Check In / Check Out]
-    SD --> WP[Workout Plan / Notes / Attachments]
-
-    CL --> CP[Client Profile]
-    CP --> BS[Book Session]
-    CP --> MSG[Message Client]
-
-    HR --> PR[Payroll & Compensation]
-    HR --> AT[Attendance Trends]
-
-    BI --> INV[Invoice Detail]
-    INV --> MP[Mark Paid / Reminder]
+    BI --> PF[Payment Failed State]
+    CL --> EC[Empty Clients State]
 ```
 
 ## 3) Member Screen Flow
 
 ```mermaid
 flowchart TD
-    MW[Member Welcome] --> MC[Create Account]
-    MW --> MS[Sign In]
+    ML[Session Loaded as Member] --> MH[Home Tab]
+    MH --> WO[Workouts Tab]
+    MH --> NU[Nutrition Tab]
+    MH --> CO[Community Tab]
+    MH --> ME[Membership Tab]
+    MH --> PR[Profile Tab]
 
-    MC --> O1[Onboarding Step 1\nGoals + Experience]
-    O1 --> O2[Onboarding Step 2\nBody + Gym + Injuries + Nutrition]
-    O2 --> O3[Onboarding Step 3\nConnect Apple Health / Google Fit]
-    O3 --> MH[Member Home]
+    WO --> WD[Workout Detail Stack Screen]
+    WD --> LW[Live Workout Stack Screen]
 
-    MS --> MH
-
-    MH --> WO[Workouts Library]
-    WO --> WD[Workout Detail]
-    WD --> WL[Live Workout]
-    WL --> WC[Workout Complete]
-
-    MH --> NU[Nutrition Dashboard]
-    NU --> LM[Log Meal]
-
-    MH --> CO[Community]
-    MH --> ME[Membership]
-    MH --> PR[Profile / Preferences]
-
-    PR --> WI[Wearable Integrations]
-    PR --> AL[Alerts & Notifications]
+    WO --> OF[Offline State]
 ```
 
-## 4) Cross-Cutting Rules (Applied to all screens)
+## 4) Global UX States
 
-- **Multi-tenant isolation**: every user journey is gym-scoped (`gym_id`).
-- **White-label rendering**: theme/logo resolved by tenant context.
-- **Role-based access**:
-  - Trainer sees assigned members and trainer workspace actions only.
-  - Member sees personal data, workouts, attendance, wearables only.
-- **Billing states affect access**: trial / active / suspended controls gated experiences.
+```mermaid
+flowchart LR
+    START[App Start] --> LOADING[Loading: Restoring Session]
+    LOADING --> READY[Role Resolved]
+    LOADING --> ERROR[Error: Session Restore Failed]
+    ERROR --> RETRY[Retry]
+    RETRY --> LOADING
+```
 
+## 5) Rules
+
+- Role selection in production comes from backend JWT claims (`role`) and tenant context (`gym_slug`).
+- White-label theme is injected via `ThemeProvider` (dynamic token map per gym).
+- Empty, error, and offline states are first-class UX states in relevant screens.
