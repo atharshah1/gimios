@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api import auth, gym, users, hrms, timeslot, attendance, workout, wearable, billing, admin
 from app.api.routes import api_router
@@ -13,6 +14,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_: Request, exc: HTTPException):
+    return JSONResponse(status_code=exc.status_code, content={"success": False, "data": None, "error": str(exc.detail)})
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(_: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"success": False, "data": None, "error": str(exc)})
+
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(gym.router, prefix="/api/v1/gyms", tags=["gyms"])
@@ -29,6 +41,7 @@ app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
 
 # New contract-aligned modular API routes
 app.include_router(api_router)

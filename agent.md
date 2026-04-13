@@ -545,7 +545,7 @@ Implement one of the following in priority order:
 
 ```json
 {
-  "event": "slots.changed",
+  "event": "slots:changed",
   "gym_id": "uuid",
   "entity_id": "slot-123",
   "action": "created",
