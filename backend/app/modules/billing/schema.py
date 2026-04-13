@@ -1,7 +1,15 @@
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel
+
+
+class PaymentStatusEnum(str, Enum):
+    pending = "pending"
+    paid = "paid"
+    failed = "failed"
+    refunded = "refunded"
 
 
 class BillingPlan(BaseModel):
@@ -13,10 +21,11 @@ class BillingPlan(BaseModel):
 
 class BillingPayment(BaseModel):
     id: str
+    invoice_number: str
     amount: int
-    status: str
-    period_start: datetime | None
-    period_end: datetime | None
+    status: PaymentStatusEnum
+    paid_at: datetime | None
+    created_at: datetime
 
 
 class BillingStatus(BaseModel):
@@ -30,3 +39,7 @@ class BillingView(BaseModel):
     status: BillingStatus
     plans: list[BillingPlan]
     payments: list[BillingPayment]
+
+
+class PaymentStatusUpdate(BaseModel):
+    status: PaymentStatusEnum

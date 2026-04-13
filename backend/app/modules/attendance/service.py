@@ -1,7 +1,5 @@
-from collections import defaultdict
-
 from fastapi import HTTPException
-from sqlalchemy import Select, desc, select
+from sqlalchemy import Select, case, desc, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +12,7 @@ from app.modules.attendance.schema import (
     AttendanceCreate,
     AttendanceListFilters,
     AttendanceOverview,
+    AttendanceSort,
     AttendanceView,
     SlotAttendanceSummary,
 )
@@ -48,8 +47,8 @@ class AttendanceService:
         event_bus.emit("attendance:changed", str(auth.gym_id), str(record.id), "created")
         return AttendanceView.model_validate(record, from_attributes=True)
 
-    async def list(self, auth: AuthContext, filters: AttendanceListFilters) -> list[AttendanceView]:
-        query: Select[tuple[Attendance]] = select(Attendance).where(Attendance.gym_id == auth.gym_id)
+    def _base_query(self, auth: AuthContext, filters: AttendanceListFilters) -> Select:
+        query: Select = select(Attendance).where(Attendance.gym_id == auth.gym_id)
         if auth.role == UserRole.member:
             query = query.where(Attendance.user_id == auth.user_id)
         elif filters.member_id:
@@ -62,12 +61,16 @@ class AttendanceService:
 
         if filters.date:
             query = query.where(Attendance.date == filters.date)
+        return query
+
+    async def list(self, auth: AuthContext, filters: AttendanceListFilters) -> list[AttendanceView]:
+        query = self._base_query(auth, filters)
 
         sort_map = {
-            "date": Attendance.date,
-            "-date": desc(Attendance.date),
-            "created_at": Attendance.created_at,
-            "-created_at": desc(Attendance.created_at),
+            AttendanceSort.date: Attendance.date,
+            AttendanceSort.date_desc: desc(Attendance.date),
+            AttendanceSort.created_at: Attendance.created_at,
+            AttendanceSort.created_at_desc: desc(Attendance.created_at),
         }
         query = query.order_by(sort_map.get(filters.sort, desc(Attendance.date)))
         query = query.offset(filters.offset).limit(filters.limit)
@@ -75,33 +78,35 @@ class AttendanceService:
         return [AttendanceView.model_validate(row, from_attributes=True) for row in result.scalars().all()]
 
     async def overview(self, auth: AuthContext, filters: AttendanceListFilters) -> AttendanceOverview:
-        rows = await self.list(auth, AttendanceListFilters(**{**filters.model_dump(), "limit": 500, "offset": 0}))
-        total = len(rows)
-        present = sum(1 for r in rows if r.status == AttendanceStatus.present)
-        absent = total - present
-        slot_buckets: dict = defaultdict(lambda: {"total": 0, "present": 0, "absent": 0})
-        for row in rows:
-            bucket = slot_buckets[row.slot_id]
-            bucket["total"] += 1
-            if row.status == AttendanceStatus.present:
-                bucket["present"] += 1
-            else:
-                bucket["absent"] += 1
+        present_case = case((Attendance.status == AttendanceStatus.present, 1), else_=0)
+        absent_case = case((Attendance.status == AttendanceStatus.absent, 1), else_=0)
+
+        total_query = self._base_query(auth, filters).with_only_columns(
+            func.count(Attendance.id),
+            func.coalesce(func.sum(present_case), 0),
+            func.coalesce(func.sum(absent_case), 0),
+        )
+        total_result = await self.db.execute(total_query)
+        total_records, present_count, absent_count = total_result.one()
+
+        by_slot_query = self._base_query(auth, filters).with_only_columns(
+            Attendance.slot_id,
+            func.count(Attendance.id).label("total"),
+            func.coalesce(func.sum(present_case), 0).label("present"),
+            func.coalesce(func.sum(absent_case), 0).label("absent"),
+        ).group_by(Attendance.slot_id)
+        by_slot_result = await self.db.execute(by_slot_query)
 
         by_slot = [
-            SlotAttendanceSummary(
-                slot_id=slot_id,
-                total=stats["total"],
-                present=stats["present"],
-                absent=stats["absent"],
-            )
-            for slot_id, stats in slot_buckets.items()
+            SlotAttendanceSummary(slot_id=row.slot_id, total=row.total, present=row.present, absent=row.absent)
+            for row in by_slot_result
         ]
-        attendance_rate = (present / total) * 100 if total else 0.0
+        attendance_rate = (present_count / total_records) * 100 if total_records else 0.0
+
         return AttendanceOverview(
-            total_records=total,
-            present_count=present,
-            absent_count=absent,
+            total_records=total_records,
+            present_count=present_count,
+            absent_count=absent_count,
             attendance_rate=round(attendance_rate, 2),
             by_slot=by_slot,
         )

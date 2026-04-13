@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -24,13 +25,20 @@ class AttendanceView(BaseModel):
     created_at: datetime
 
 
+class AttendanceSort(str, Enum):
+    date = "date"
+    date_desc = "-date"
+    created_at = "created_at"
+    created_at_desc = "-created_at"
+
+
 class AttendanceListFilters(BaseModel):
     member_id: UUID | None = None
     trainer_id: UUID | None = None
     date: date | None = None
     limit: int = Field(default=100, ge=1, le=500)
     offset: int = Field(default=0, ge=0)
-    sort: str = Field(default="-date")
+    sort: AttendanceSort = AttendanceSort.date_desc
 
 
 class SlotAttendanceSummary(BaseModel):

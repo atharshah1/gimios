@@ -6,7 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.middlewares.auth_context import AuthContext, require_auth_context
 from app.core.database import get_db
 from app.core.schemas import ApiResponse, success_response
-from app.modules.billing.schema import BillingPayment, BillingPlan, BillingStatus, BillingView
+from app.modules.billing.schema import (
+    BillingPayment,
+    BillingPlan,
+    BillingStatus,
+    BillingView,
+    PaymentStatusUpdate,
+)
 from app.modules.billing.service import BillingService
 
 router = APIRouter(prefix="/billing", tags=["billing"])
@@ -36,8 +42,19 @@ async def list_payments(
     auth: Annotated[AuthContext, Depends(require_auth_context)],
     db: AsyncSession = Depends(get_db),
 ):
-    billing = await BillingService(db).get_billing(auth)
-    return success_response(billing.payments)
+    payments = await BillingService(db).list_payments(auth)
+    return success_response(payments)
+
+
+@router.patch("/payments/{payment_id}", response_model=ApiResponse[BillingPayment])
+async def update_payment_status(
+    payment_id: str,
+    body: PaymentStatusUpdate,
+    auth: Annotated[AuthContext, Depends(require_auth_context)],
+    db: AsyncSession = Depends(get_db),
+):
+    payment = await BillingService(db).update_payment_status(auth, payment_id, body.status)
+    return success_response(payment)
 
 
 @router.get("/status", response_model=ApiResponse[BillingStatus])

@@ -1,4 +1,5 @@
 from datetime import date, time
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -18,9 +19,18 @@ class SlotView(SlotCreate):
     gym_id: UUID
 
 
+class SlotSort(str, Enum):
+    date = "date"
+    date_desc = "-date"
+    start_time = "start_time"
+    start_time_desc = "-start_time"
+    name = "name"
+    name_desc = "-name"
+
+
 class SlotListFilters(BaseModel):
     trainer_id: UUID | None = None
     date: date | None = None
     limit: int = Field(default=50, ge=1, le=200)
     offset: int = Field(default=0, ge=0)
-    sort: str = Field(default="date")
+    sort: SlotSort = SlotSort.date

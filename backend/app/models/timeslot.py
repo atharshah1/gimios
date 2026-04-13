@@ -12,8 +12,8 @@ class TimeSlot(Base):
     __tablename__ = "time_slots"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    gym_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("gyms.id"), nullable=False)
-    trainer_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("trainers.id"), nullable=True)
+    gym_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("gyms.id"), nullable=False, index=True)
+    trainer_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("trainers.id"), nullable=True, index=True)
     date: Mapped[date] = mapped_column(Date, nullable=False, index=True, default=lambda: datetime.now(timezone.utc).date())
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     start_time: Mapped[time] = mapped_column(Time, nullable=False)

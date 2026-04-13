@@ -13,6 +13,7 @@ from app.modules.attendance.schema import (
     AttendanceCreate,
     AttendanceListFilters,
     AttendanceOverview,
+    AttendanceSort,
     AttendanceView,
 )
 from app.modules.attendance.service import AttendanceService
@@ -41,7 +42,7 @@ async def list_attendance(
     date_value: date | None = Query(default=None, alias="date"),
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
-    sort: str = Query(default="-date"),
+    sort: AttendanceSort = Query(default=AttendanceSort.date_desc),
 ):
     filters = AttendanceListFilters(
         member_id=member_id,

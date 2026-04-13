@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.middlewares.auth_context import AuthContext
 from app.core.events import event_bus
 from app.models.timeslot import TimeSlot
-from app.modules.slots.schema import SlotCreate, SlotListFilters, SlotView
+from app.modules.slots.schema import SlotCreate, SlotListFilters, SlotSort, SlotView
 
 
 class SlotService:
@@ -28,12 +28,12 @@ class SlotService:
             query = query.where(TimeSlot.date == filters.date)
 
         sort_map = {
-            "date": TimeSlot.date,
-            "-date": desc(TimeSlot.date),
-            "start_time": TimeSlot.start_time,
-            "-start_time": desc(TimeSlot.start_time),
-            "name": TimeSlot.name,
-            "-name": desc(TimeSlot.name),
+            SlotSort.date: TimeSlot.date,
+            SlotSort.date_desc: desc(TimeSlot.date),
+            SlotSort.start_time: TimeSlot.start_time,
+            SlotSort.start_time_desc: desc(TimeSlot.start_time),
+            SlotSort.name: TimeSlot.name,
+            SlotSort.name_desc: desc(TimeSlot.name),
         }
         query = query.order_by(sort_map.get(filters.sort, TimeSlot.date), TimeSlot.start_time)
         query = query.offset(filters.offset).limit(filters.limit)
