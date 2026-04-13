@@ -14,7 +14,7 @@ import { billingService } from "../services/billing.service";
 import { gymService } from "../services/gym.service";
 import { slotsService } from "../services/slots.service";
 import type { AttendanceRecord, Member, Slot, Trainer } from "../types";
-import { trainerSchema } from "../validation/schemas";
+import { memberSchema, paymentSchema, slotSchema, trainerSchema } from "../validation/schemas";
 
 export function OwnerPanel({ tab }: { tab: string }) {
   const { settings, trainers, members } = useGym();
@@ -23,7 +23,14 @@ export function OwnerPanel({ tab }: { tab: string }) {
   const billing = useBilling();
   const analytics = useAnalytics();
   const [quickName, setQuickName] = useState("");
+  const [memberName, setMemberName] = useState("");
+  const [slotTitle, setSlotTitle] = useState("New Batch");
+  const [slotHour, setSlotHour] = useState(7);
+  const [paymentAmount, setPaymentAmount] = useState(2500);
   const [formError, setFormError] = useState<string | null>(null);
+  const [memberError, setMemberError] = useState<string | null>(null);
+  const [slotError, setSlotError] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   if (settings.loading) return <LoadingSkeleton />;
   if (settings.error) return <ErrorState message={settings.error} />;
@@ -81,6 +88,22 @@ export function OwnerPanel({ tab }: { tab: string }) {
     const memberRows = (members.data ?? []) as Member[];
     return (
       <SectionCard title="Member CRM" actions={<button onClick={() => void members.refresh()}>Refresh</button>}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const result = memberSchema.parse({ name: memberName });
+            if (!result.ok) {
+              setMemberError(result.message);
+              return;
+            }
+            setMemberError(null);
+            void gymService.upsertMember({ name: memberName.trim() });
+            setMemberName("");
+          }}
+        >
+          <Input value={memberName} onChange={(e) => setMemberName(e.target.value)} placeholder="Add member" />
+          {memberError ? <p className="error-text">{memberError}</p> : null}
+        </form>
         {memberRows.map((m) => <div key={m.id} className="row"><span>{m.name} · {m.membershipStatus} · payment {m.paymentStatus} · history {m.attendanceHistory.length}</span><button onClick={() => void gymService.removeMember(m.id)}>Remove</button></div>)}
       </SectionCard>
     );
@@ -92,7 +115,36 @@ export function OwnerPanel({ tab }: { tab: string }) {
     const slotData = (slots.data ?? []) as Slot[];
     return (
       <SectionCard title="Schedule & Calendar" actions={<button onClick={() => void slots.refresh()}>Refresh</button>}>
-        <button onClick={() => void slotsService.create({ title: "New Batch", date: "2026-04-14", startHour: 7, durationMin: 60, trainerId: ((trainers.data ?? []) as Trainer[])[0]?.id ?? "t1", memberIds: ((members.data ?? []) as Member[]).slice(0, 2).map((m) => m.id) })}>Create 7AM slot</button>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const validation = slotSchema.parse({ title: slotTitle, startHour: slotHour });
+            if (!validation.ok) {
+              setSlotError(validation.message);
+              return;
+            }
+            setSlotError(null);
+            void (async () => {
+              try {
+                await slotsService.create({
+                  title: slotTitle.trim(),
+                  date: "2026-04-14",
+                  startHour: slotHour,
+                  durationMin: 60,
+                  trainerId: ((trainers.data ?? []) as Trainer[])[0]?.id ?? "t1",
+                  memberIds: ((members.data ?? []) as Member[]).slice(0, 2).map((m) => m.id),
+                });
+              } catch (error) {
+                setSlotError(error instanceof Error ? error.message : "Failed to create slot");
+              }
+            })();
+          }}
+        >
+          <Input value={slotTitle} onChange={(e) => setSlotTitle(e.target.value)} placeholder="Slot title" />
+          <Input type="number" value={slotHour} onChange={(e) => setSlotHour(Number(e.target.value))} min={0} max={23} placeholder="Start hour" />
+          <Button type="submit">Create slot</Button>
+          {slotError ? <p className="error-text">{slotError}</p> : null}
+        </form>
         <div className="calendar-grid">
           {Array.from({ length: 16 }, (_, i) => i + 6).map((hour) => (
             <div key={hour} className="calendar-row">
@@ -128,7 +180,22 @@ export function OwnerPanel({ tab }: { tab: string }) {
       <SectionCard title="Billing & Revenue" actions={<button onClick={() => void billing.payments.refresh()}>Refresh</button>}>
         <div className="row"><span>Revenue summary</span><strong>₹{revenue.toLocaleString()}</strong></div>
         <div className="row"><span>Pending payments</span><strong>₹{pending.toLocaleString()}</strong></div>
-        <button onClick={() => void billingService.addPayment(2500, "pending")}>Add pending payment</button>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const validation = paymentSchema.parse({ amount: paymentAmount });
+            if (!validation.ok) {
+              setPaymentError(validation.message);
+              return;
+            }
+            setPaymentError(null);
+            void billingService.addPayment(paymentAmount, "pending");
+          }}
+        >
+          <Input type="number" value={paymentAmount} onChange={(e) => setPaymentAmount(Number(e.target.value))} min={1} />
+          <Button type="submit">Add pending payment</Button>
+          {paymentError ? <p className="error-text">{paymentError}</p> : null}
+        </form>
         {billing.plans.data.map((p) => <p key={p.id}>{p.name} · ₹{p.amount} / {p.durationDays} days</p>)}
       </SectionCard>
     );
