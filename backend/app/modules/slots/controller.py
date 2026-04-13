@@ -35,7 +35,7 @@ async def list_slots(
     date_value: date | None = Query(default=None, alias="date"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
-    sort: str = Query(default="start_time"),
+    sort: str = Query(default="date"),
 ):
     filters = SlotListFilters(
         trainer_id=trainer_id,

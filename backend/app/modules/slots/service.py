@@ -1,4 +1,4 @@
-from sqlalchemy import Select, asc, desc, select
+from sqlalchemy import Select, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.middlewares.auth_context import AuthContext
@@ -24,20 +24,18 @@ class SlotService:
 
         if filters.trainer_id:
             query = query.where(TimeSlot.trainer_id == filters.trainer_id)
+        if filters.date:
+            query = query.where(TimeSlot.date == filters.date)
 
-        # TimeSlot does not currently store a date column; date is accepted for FE contract compatibility.
         sort_map = {
+            "date": TimeSlot.date,
+            "-date": desc(TimeSlot.date),
             "start_time": TimeSlot.start_time,
             "-start_time": desc(TimeSlot.start_time),
             "name": TimeSlot.name,
             "-name": desc(TimeSlot.name),
         }
-        sort_expr = sort_map.get(filters.sort, TimeSlot.start_time)
-        if isinstance(sort_expr, str):
-            query = query.order_by(asc(TimeSlot.start_time))
-        else:
-            query = query.order_by(sort_expr)
-
+        query = query.order_by(sort_map.get(filters.sort, TimeSlot.date), TimeSlot.start_time)
         query = query.offset(filters.offset).limit(filters.limit)
         result = await self.db.execute(query)
         return [SlotView.model_validate(slot, from_attributes=True) for slot in result.scalars().all()]

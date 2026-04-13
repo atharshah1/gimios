@@ -1,9 +1,9 @@
 import uuid
-from datetime import time
+from datetime import date, time
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,10 +16,11 @@ router = APIRouter()
 
 
 class TimeSlotCreate(BaseModel):
+    date: date
     name: str
     start_time: time
     end_time: time
-    capacity: int = 20
+    capacity: int = Field(default=20, ge=1, le=200)
     trainer_id: uuid.UUID | None = None
 
 
@@ -45,8 +46,15 @@ async def create_slot(
 async def list_slots(
     current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
+    trainer_id: uuid.UUID | None = Query(default=None),
+    date_value: date | None = Query(default=None, alias="date"),
 ):
-    result = await db.execute(select(TimeSlot).where(TimeSlot.gym_id == current_user.gym_id))
+    query = select(TimeSlot).where(TimeSlot.gym_id == current_user.gym_id)
+    if trainer_id:
+        query = query.where(TimeSlot.trainer_id == trainer_id)
+    if date_value:
+        query = query.where(TimeSlot.date == date_value)
+    result = await db.execute(query)
     return result.scalars().all()
 
 
