@@ -1,6 +1,9 @@
-from dataclasses import dataclass
+import json
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any
+
+from app.core.redis import redis_client
 
 
 @dataclass(slots=True)
@@ -13,12 +16,13 @@ class DomainEvent:
 
 
 class EventBus:
-    """Simple in-process event bus placeholder for SSE/WebSocket fanout."""
+    """Redis-backed bus with in-memory fallback for local development."""
 
     def __init__(self) -> None:
         self._events: list[DomainEvent] = []
+        self.channel = "gimios:events"
 
-    def emit(self, event: str, gym_id: str, entity_id: str, action: str) -> DomainEvent:
+    async def emit(self, event: str, gym_id: str, entity_id: str, action: str) -> DomainEvent:
         payload = DomainEvent(
             event=event,
             gym_id=gym_id,
@@ -27,10 +31,14 @@ class EventBus:
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
         self._events.append(payload)
+        try:
+            await redis_client.publish(self.channel, json.dumps(asdict(payload)))
+        except Exception:
+            pass
         return payload
 
     def recent(self, limit: int = 25) -> list[dict[str, Any]]:
-        return [e.__dict__ for e in self._events[-limit:]]
+        return [asdict(e) for e in self._events[-limit:]]
 
 
 event_bus = EventBus()

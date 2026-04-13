@@ -44,5 +44,7 @@ async def list_slots(
         offset=offset,
         sort=sort,
     )
-    data = await SlotService(db).list(auth, filters)
-    return success_response(data)
+    service = SlotService(db)
+    data = await service.list(auth, filters)
+    total = await service.count(auth, filters)
+    return success_response(data, meta={"total": total, "limit": limit, "offset": offset})

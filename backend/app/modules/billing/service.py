@@ -1,18 +1,22 @@
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
+from razorpay import Client
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.middlewares.auth_context import AuthContext
+from app.core.config import settings
 from app.core.events import event_bus
-from app.models.payment import Payment
+from app.models.payment import Payment, PaymentStatus
 from app.models.subscription import Subscription
 from app.modules.billing.schema import (
     BillingPayment,
     BillingPlan,
     BillingStatus,
     BillingView,
+    CheckoutSessionRequest,
+    CheckoutSessionResponse,
     PaymentStatusEnum,
 )
 
@@ -20,6 +24,9 @@ from app.modules.billing.schema import (
 class BillingService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
+        self.client = None
+        if settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET:
+            self.client = Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
     async def _get_or_create_subscription(self, auth: AuthContext) -> Subscription:
         result = await self.db.execute(select(Subscription).where(Subscription.gym_id == auth.gym_id))
@@ -36,7 +43,7 @@ class BillingService:
             await self.db.commit()
             await self.db.refresh(subscription)
             await self._ensure_initial_payment(subscription)
-            event_bus.emit("billing:changed", str(auth.gym_id), str(subscription.id), "created")
+            await event_bus.emit("billing:changed", str(auth.gym_id), str(subscription.id), "created")
         return subscription
 
     async def _ensure_initial_payment(self, subscription: Subscription) -> None:
@@ -48,7 +55,8 @@ class BillingService:
             subscription_id=subscription.id,
             invoice_number=f"INV-{str(subscription.id)[:8]}-001",
             amount=subscription.plan_amount,
-            status=PaymentStatusEnum.pending.value,
+            currency="INR",
+            status=PaymentStatus.pending,
         )
         self.db.add(payment)
         await self.db.commit()
@@ -69,8 +77,9 @@ class BillingService:
 
     def list_plans(self) -> list[BillingPlan]:
         return [
-            BillingPlan(id="gym-standard-monthly", name="Gym Standard", amount=1500000, interval="month"),
-            BillingPlan(id="gym-standard-yearly", name="Gym Standard Yearly", amount=16200000, interval="year"),
+            BillingPlan(id="gym-standard-monthly", name="Gym Standard", amount=1500000, interval="month", currency="INR"),
+            BillingPlan(id="gym-standard-yearly", name="Gym Standard Yearly", amount=16200000, interval="year", currency="INR"),
+            BillingPlan(id="gym-international-monthly", name="Gym Global", amount=20000, interval="month", currency="USD"),
         ]
 
     async def list_payments(self, auth: AuthContext) -> list[BillingPayment]:
@@ -84,9 +93,12 @@ class BillingService:
                 id=str(row.id),
                 invoice_number=row.invoice_number,
                 amount=row.amount,
-                status=PaymentStatusEnum(row.status),
+                currency=row.currency,
+                status=PaymentStatusEnum(row.status.value),
                 paid_at=row.paid_at,
                 created_at=row.created_at,
+                gateway_order_id=row.gateway_order_id,
+                gateway_payment_id=row.gateway_payment_id,
             )
             for row in rows
         ]
@@ -101,17 +113,86 @@ class BillingService:
         payment = result.scalar_one_or_none()
         if payment is None:
             raise HTTPException(status_code=404, detail="Payment not found")
-        payment.status = status.value
+        payment.status = PaymentStatus(status.value)
         if status == PaymentStatusEnum.paid:
             payment.paid_at = datetime.now(timezone.utc)
         await self.db.commit()
         await self.db.refresh(payment)
-        event_bus.emit("billing:changed", str(auth.gym_id), str(payment.id), "updated")
+        await event_bus.emit("billing:changed", str(auth.gym_id), str(payment.id), "updated")
         return BillingPayment(
             id=str(payment.id),
             invoice_number=payment.invoice_number,
             amount=payment.amount,
-            status=PaymentStatusEnum(payment.status),
+            currency=payment.currency,
+            status=PaymentStatusEnum(payment.status.value),
             paid_at=payment.paid_at,
             created_at=payment.created_at,
+            gateway_order_id=payment.gateway_order_id,
+            gateway_payment_id=payment.gateway_payment_id,
         )
+
+    async def create_checkout_session(self, auth: AuthContext, body: CheckoutSessionRequest) -> CheckoutSessionResponse:
+        if self.client is None:
+            raise HTTPException(status_code=503, detail="Razorpay is not configured")
+        subscription = await self._get_or_create_subscription(auth)
+        receipt = f"gym-{auth.gym_id}-{int(datetime.now(timezone.utc).timestamp())}"
+        order = self.client.order.create(
+            {
+                "amount": body.amount,
+                "currency": body.currency.upper(),
+                "receipt": receipt,
+                "notes": {"gym_id": str(auth.gym_id), "plan_id": body.plan_id or "custom"},
+            }
+        )
+
+        payment = Payment(
+            gym_id=subscription.gym_id,
+            subscription_id=subscription.id,
+            invoice_number=f"INV-{receipt}",
+            amount=body.amount,
+            currency=body.currency.upper(),
+            status=PaymentStatus.pending,
+            gateway_order_id=order["id"],
+        )
+        self.db.add(payment)
+        await self.db.commit()
+
+        return CheckoutSessionResponse(
+            order_id=order["id"],
+            amount=order["amount"],
+            currency=order["currency"],
+            key_id=settings.RAZORPAY_KEY_ID,
+        )
+
+    async def handle_razorpay_webhook(self, signature: str, raw_body: str, payload: dict) -> None:
+        if self.client is None:
+            raise HTTPException(status_code=503, detail="Razorpay is not configured")
+        body = payload if isinstance(payload, dict) else {}
+        try:
+            self.client.utility.verify_webhook_signature(raw_body, signature, settings.RAZORPAY_WEBHOOK_SECRET)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail="Invalid webhook signature") from exc
+
+        entity = body.get("payload", {}).get("payment", {}).get("entity", {})
+        order_id = entity.get("order_id")
+        payment_id = entity.get("id")
+        status = entity.get("status", "").lower()
+        if not order_id:
+            return
+
+        result = await self.db.execute(select(Payment).where(Payment.gateway_order_id == order_id))
+        payment = result.scalar_one_or_none()
+        if payment is None:
+            return
+
+        mapped = PaymentStatus.pending
+        if status == "captured":
+            mapped = PaymentStatus.paid
+            payment.paid_at = datetime.now(timezone.utc)
+        elif status == "failed":
+            mapped = PaymentStatus.failed
+
+        payment.status = mapped
+        payment.gateway_payment_id = payment_id
+        await self.db.commit()
+        await event_bus.emit("billing:changed", str(payment.gym_id), str(payment.id), "updated")

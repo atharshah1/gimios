@@ -2,7 +2,7 @@ from datetime import date, time
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class SlotCreate(BaseModel):
@@ -12,6 +12,12 @@ class SlotCreate(BaseModel):
     end_time: time
     capacity: int = Field(default=20, ge=1, le=200)
     trainer_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def validate_time_window(self):
+        if self.end_time <= self.start_time:
+            raise ValueError("end_time must be greater than start_time")
+        return self
 
 
 class SlotView(SlotCreate):

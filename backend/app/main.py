@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 from app.api import auth, gym, users, hrms, timeslot, attendance, workout, wearable, billing, admin
 from app.api.routes import api_router
+from app.api.middlewares import RateLimitAndAuditMiddleware
 
 app = FastAPI(title="GymOS API", version="0.1.0")
 
@@ -14,6 +15,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RateLimitAndAuditMiddleware, limit_per_minute=180)
 
 
 @app.exception_handler(HTTPException)

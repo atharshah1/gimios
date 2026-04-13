@@ -29,5 +29,5 @@ class RosterService:
         self.db.add(user)
         await self.db.commit()
         await self.db.refresh(user)
-        event_bus.emit("roster:changed", str(auth.gym_id), str(user.id), "created")
+        await event_bus.emit("roster:changed", str(auth.gym_id), str(user.id), "created")
         return RosterUserView.model_validate(user, from_attributes=True)

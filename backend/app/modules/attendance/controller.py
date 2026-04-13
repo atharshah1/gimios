@@ -52,8 +52,10 @@ async def list_attendance(
         offset=offset,
         sort=sort,
     )
-    data = await AttendanceService(db).list(auth, filters)
-    return success_response(data)
+    service = AttendanceService(db)
+    data = await service.list(auth, filters)
+    total = await service.count(auth, filters)
+    return success_response(data, meta={"total": total, "limit": limit, "offset": offset})
 
 
 @router.get("/overview", response_model=ApiResponse[AttendanceOverview])

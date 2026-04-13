@@ -7,6 +7,7 @@ from app.modules.billing.controller import router as billing_router
 from app.modules.gym.controller import router as gym_router
 from app.modules.roster.controller import router as roster_router
 from app.modules.slots.controller import router as slots_router
+from app.api.routes.events import router as events_router
 
 api_router = APIRouter()
 api_router.include_router(auth_router)
@@ -16,3 +17,4 @@ api_router.include_router(slots_router)
 api_router.include_router(attendance_router)
 api_router.include_router(billing_router)
 api_router.include_router(analytics_router)
+api_router.include_router(events_router)

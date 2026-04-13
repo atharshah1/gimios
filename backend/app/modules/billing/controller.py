@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.middlewares.auth_context import AuthContext, require_auth_context
@@ -11,6 +11,8 @@ from app.modules.billing.schema import (
     BillingPlan,
     BillingStatus,
     BillingView,
+    CheckoutSessionRequest,
+    CheckoutSessionResponse,
     PaymentStatusUpdate,
 )
 from app.modules.billing.service import BillingService
@@ -42,8 +44,9 @@ async def list_payments(
     auth: Annotated[AuthContext, Depends(require_auth_context)],
     db: AsyncSession = Depends(get_db),
 ):
-    payments = await BillingService(db).list_payments(auth)
-    return success_response(payments)
+    service = BillingService(db)
+    payments = await service.list_payments(auth)
+    return success_response(payments, meta={"total": len(payments)})
 
 
 @router.patch("/payments/{payment_id}", response_model=ApiResponse[BillingPayment])
@@ -55,6 +58,28 @@ async def update_payment_status(
 ):
     payment = await BillingService(db).update_payment_status(auth, payment_id, body.status)
     return success_response(payment)
+
+
+@router.post("/checkout-session", response_model=ApiResponse[CheckoutSessionResponse])
+async def create_checkout_session(
+    body: CheckoutSessionRequest,
+    auth: Annotated[AuthContext, Depends(require_auth_context)],
+    db: AsyncSession = Depends(get_db),
+):
+    checkout = await BillingService(db).create_checkout_session(auth, body)
+    return success_response(checkout)
+
+
+@router.post("/webhooks/razorpay", response_model=ApiResponse[dict])
+async def razorpay_webhook(
+    request: Request,
+    x_razorpay_signature: str = Header(alias="X-Razorpay-Signature"),
+    db: AsyncSession = Depends(get_db),
+):
+    raw_body = (await request.body()).decode("utf-8")
+    payload = await request.json()
+    await BillingService(db).handle_razorpay_webhook(x_razorpay_signature, raw_body, payload)
+    return success_response({"processed": True})
 
 
 @router.get("/status", response_model=ApiResponse[BillingStatus])

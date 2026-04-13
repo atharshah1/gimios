@@ -44,7 +44,7 @@ class AttendanceService:
             await self.db.rollback()
             raise HTTPException(status_code=409, detail="Attendance already exists") from exc
         await self.db.refresh(record)
-        event_bus.emit("attendance:changed", str(auth.gym_id), str(record.id), "created")
+        await event_bus.emit("attendance:changed", str(auth.gym_id), str(record.id), "created")
         return AttendanceView.model_validate(record, from_attributes=True)
 
     def _base_query(self, auth: AuthContext, filters: AttendanceListFilters) -> Select:
@@ -76,6 +76,12 @@ class AttendanceService:
         query = query.offset(filters.offset).limit(filters.limit)
         result = await self.db.execute(query)
         return [AttendanceView.model_validate(row, from_attributes=True) for row in result.scalars().all()]
+
+
+    async def count(self, auth: AuthContext, filters: AttendanceListFilters) -> int:
+        count_query = self._base_query(auth, filters).with_only_columns(func.count(Attendance.id))
+        result = await self.db.execute(count_query)
+        return int(result.scalar_one() or 0)
 
     async def overview(self, auth: AuthContext, filters: AttendanceListFilters) -> AttendanceOverview:
         present_case = case((Attendance.status == AttendanceStatus.present, 1), else_=0)
