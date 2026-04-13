@@ -7,9 +7,9 @@ import { SkeletonGroup } from "../../components/SkeletonGroup";
 import { useAttendance } from "../../hooks/useAttendance";
 
 export function OwnerAttendanceScreen() {
-  const { attendance, loading, error } = useAttendance();
+  const { attendance, loading, error, refresh } = useAttendance();
   return (
-    <ScreenShell title="Attendance Overview">
+    <ScreenShell title="Attendance Overview" onRefresh={refresh}>
       <Card title="Attendance" subtitle="Owner visibility across slots">
         {loading ? <SkeletonGroup rows={3} /> : null}
         {error ? <StateView title="Error" description={error} /> : null}

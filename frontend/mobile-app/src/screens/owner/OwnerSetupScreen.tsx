@@ -11,12 +11,15 @@ export function OwnerSetupScreen() {
   const [themePrimary, setThemePrimary] = useState("#8BFF2A");
   const [message, setMessage] = useState("");
 
+  const loadProfile = async () => {
+    const profile = await gymService.fetchGymProfile();
+    setGymName(profile.gymName);
+    setLogoUrl(profile.logoUrl);
+    setThemePrimary(profile.themePrimary);
+  };
+
   useEffect(() => {
-    gymService.fetchGymProfile().then((profile) => {
-      setGymName(profile.gymName);
-      setLogoUrl(profile.logoUrl);
-      setThemePrimary(profile.themePrimary);
-    });
+    loadProfile();
   }, []);
 
   const onSubmit = async () => {
@@ -29,7 +32,7 @@ export function OwnerSetupScreen() {
   };
 
   return (
-    <ScreenShell title="Gym Owner Setup">
+    <ScreenShell title="Gym Owner Setup" onRefresh={loadProfile}>
       <Card title="Signup → Create Gym" subtitle="Upload logo and select theme">
         <TextInput placeholder="Gym Name" value={gymName} onChangeText={setGymName} style={{ borderWidth: 1, padding: 10, borderRadius: 8 }} />
         <TextInput placeholder="Logo URL" value={logoUrl} onChangeText={setLogoUrl} style={{ borderWidth: 1, padding: 10, borderRadius: 8 }} />

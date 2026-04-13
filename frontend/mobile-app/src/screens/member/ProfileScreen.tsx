@@ -13,11 +13,11 @@ import { RootStackParamList } from "../../navigation/types";
 export function ProfileScreen() {
   const { devSwitchRole, currentUser } = useAuth();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const { slots, loading: slotsLoading, error: slotsError } = useSlots();
-  const { markAttendance, error: attendanceError } = useAttendance();
+  const { slots, loading: slotsLoading, error: slotsError, refresh: refreshSlots } = useSlots();
+  const { markAttendance, error: attendanceError, refresh: refreshAttendance } = useAttendance();
 
   return (
-    <ScreenShell title="Profile">
+    <ScreenShell title="Profile" onRefresh={async () => { await Promise.all([refreshSlots(), refreshAttendance()]); }}>
       <Card title={currentUser?.fullName ?? "Member"} subtitle="Pro Member since 2022">
         <Button title="View Attendance History" onPress={() => navigation.navigate("AttendanceHistory")} />
         {slotsLoading ? <SkeletonGroup rows={2} /> : null}

@@ -8,11 +8,11 @@ import { useAttendance } from "../../hooks/useAttendance";
 import { useSlots } from "../../hooks/useSlots";
 
 export function ScheduleScreen() {
-  const { slots, loading: slotsLoading, error: slotsError } = useSlots();
-  const { markAttendance, error: attendanceError } = useAttendance();
+  const { slots, loading: slotsLoading, error: slotsError, refresh: refreshSlots } = useSlots();
+  const { markAttendance, error: attendanceError, refresh: refreshAttendance } = useAttendance();
 
   return (
-    <ScreenShell title="Schedule">
+    <ScreenShell title="Schedule" onRefresh={async () => { await Promise.all([refreshSlots(), refreshAttendance()]); }}>
       <Card title="All Sessions" subtitle="Slots created by Gym Owner">
         {slotsLoading ? <SkeletonGroup rows={3} /> : null}
         {slotsError ? <StateView title="Error" description={slotsError} /> : null}

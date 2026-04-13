@@ -7,7 +7,7 @@ import { SkeletonGroup } from "../../components/SkeletonGroup";
 import { useRoster } from "../../hooks/useRoster";
 
 export function OwnerMembersScreen() {
-  const { members, addMember, loading, error: apiError } = useRoster();
+  const { members, addMember, loading, error: apiError, refresh } = useRoster();
   const [name, setName] = useState("");
   const [error, setError] = useState("");
 
@@ -22,7 +22,7 @@ export function OwnerMembersScreen() {
   };
 
   return (
-    <ScreenShell title="Add Members">
+    <ScreenShell title="Add Members" onRefresh={refresh}>
       <Card title="Create Member" subtitle="Input + validation flow">
         <TextInput placeholder="Member full name" value={name} onChangeText={setName} style={{ borderWidth: 1, padding: 10, borderRadius: 8 }} />
         {error ? <StateView title="Validation" description={error} /> : null}

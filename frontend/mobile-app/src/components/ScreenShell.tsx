@@ -1,12 +1,34 @@
-import React from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text } from "react-native";
+import React, { useState } from "react";
+import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text } from "react-native";
 import { useGymTheme } from "../contexts/ThemeContext";
 
-export function ScreenShell({ title, children }: { title: string; children: React.ReactNode }) {
+export function ScreenShell({
+  title,
+  children,
+  onRefresh,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onRefresh?: () => Promise<void> | void;
+}) {
   const theme = useGymTheme();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await onRefresh?.();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}> 
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.accent} />}
+      >
         <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
         {children}
       </ScrollView>

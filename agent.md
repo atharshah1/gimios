@@ -575,3 +575,4 @@ Implement one of the following in priority order:
   1. skeleton loading,
   2. error state,
   3. empty state.
+- Mobile UI screens should support pull-to-refresh for manual sync fallback; in current RN implementation this is attached in the shared `ScreenShell` component so all screen flows can trigger refresh actions when provided.

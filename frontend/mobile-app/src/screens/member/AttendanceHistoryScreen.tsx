@@ -8,12 +8,12 @@ import { useAttendance } from "../../hooks/useAttendance";
 import { useAuth } from "../../hooks/useAuth";
 
 export function AttendanceHistoryScreen() {
-  const { attendance, loading, error } = useAttendance();
+  const { attendance, loading, error, refresh } = useAttendance();
   const { currentUser } = useAuth();
   const memberHistory = attendance.filter((record) => record.memberId === currentUser?.id);
 
   return (
-    <ScreenShell title="Attendance History">
+    <ScreenShell title="Attendance History" onRefresh={refresh}>
       {loading ? <SkeletonGroup rows={3} /> : null}
       {error ? <StateView title="Error" description={error} /> : null}
       {!loading && !error && memberHistory.length === 0 ? (

@@ -9,12 +9,12 @@ import { useRoster } from "../../hooks/useRoster";
 import { useSlots } from "../../hooks/useSlots";
 
 export function OwnerDashboardScreen() {
-  const { trainers, members, loading: rosterLoading, error: rosterError } = useRoster();
-  const { slots, loading: slotsLoading, error: slotsError } = useSlots();
-  const { attendance, loading: attendanceLoading, error: attendanceError } = useAttendance();
+  const { trainers, members, loading: rosterLoading, error: rosterError, refresh: refreshRoster } = useRoster();
+  const { slots, loading: slotsLoading, error: slotsError, refresh: refreshSlots } = useSlots();
+  const { attendance, loading: attendanceLoading, error: attendanceError, refresh: refreshAttendance } = useAttendance();
 
   return (
-    <ScreenShell title="Owner Dashboard">
+    <ScreenShell title="Owner Dashboard" onRefresh={async () => { await Promise.all([refreshRoster(), refreshSlots(), refreshAttendance()]); }}>
       <Card title="Operations Snapshot" subtitle="Live linked flow metrics">
         {(rosterLoading || slotsLoading || attendanceLoading) ? <SkeletonGroup rows={4} /> : null}
         {(rosterError || slotsError || attendanceError) ? <StateView title="Error" description={rosterError || slotsError || attendanceError || "Unknown error"} /> : null}

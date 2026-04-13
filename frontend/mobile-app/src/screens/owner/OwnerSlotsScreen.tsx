@@ -8,8 +8,8 @@ import { useRoster } from "../../hooks/useRoster";
 import { useSlots } from "../../hooks/useSlots";
 
 export function OwnerSlotsScreen() {
-  const { slots, createSlot, loading: slotsLoading, error: slotsError } = useSlots();
-  const { trainers, members, loading: rosterLoading, error: rosterError } = useRoster();
+  const { slots, createSlot, loading: slotsLoading, error: slotsError, refresh: refreshSlots } = useSlots();
+  const { trainers, members, loading: rosterLoading, error: rosterError, refresh: refreshRoster } = useRoster();
   const [date, setDate] = useState("2026-04-14");
   const [time, setTime] = useState("10:00");
   const [trainer, setTrainer] = useState("");
@@ -39,7 +39,7 @@ export function OwnerSlotsScreen() {
   };
 
   return (
-    <ScreenShell title="Create Time Slots">
+    <ScreenShell title="Create Time Slots" onRefresh={async () => { await Promise.all([refreshSlots(), refreshRoster()]); }}>
       <Card title="New Slot Form" subtitle="Owner creates slots">
         <TextInput placeholder="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} style={{ borderWidth: 1, padding: 10, borderRadius: 8 }} />
         <TextInput placeholder="Time (HH:mm)" value={time} onChangeText={setTime} style={{ borderWidth: 1, padding: 10, borderRadius: 8 }} />
