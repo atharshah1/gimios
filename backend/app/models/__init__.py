@@ -6,6 +6,7 @@ from app.models.timeslot import TimeSlot
 from app.models.attendance import Attendance, AttendanceStatus
 from app.models.workout import Workout
 from app.models.wearable import WearableData, WearableSource
+from app.models.payment import Payment
 
 __all__ = [
     "Gym",
@@ -20,4 +21,5 @@ __all__ = [
     "Workout",
     "WearableData",
     "WearableSource",
+    "Payment",
 ]
