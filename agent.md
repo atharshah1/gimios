@@ -576,3 +576,21 @@ Implement one of the following in priority order:
   2. error state,
   3. empty state.
 - Mobile UI screens should support pull-to-refresh for manual sync fallback; in current RN implementation this is attached in the shared `ScreenShell` component so all screen flows can trigger refresh actions when provided.
+
+## 🖥️ 17. Web App Focus (Admin + Gym Owner Dashboard)
+
+When shifting from mobile-first to web-first implementation:
+
+- `frontend/gym-dashboard/` should implement Gym Owner operational flows:
+  - Create Gym / Branding
+  - Add Trainers
+  - Add Members
+  - Create Time Slots
+  - View Attendance
+  - Billing / Subscription
+- `frontend/super-admin/` should implement platform control flows:
+  - View all gyms
+  - Activate 15-day trial
+  - Monitor active gyms and revenue
+
+For MVP, mock state is acceptable in FE components; later wire APIs from `backend/app/api/*`.
