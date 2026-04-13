@@ -9,8 +9,8 @@ export function SettingsScreen() {
   return (
     <ScreenShell title="Settings">
       <Card title="Profile & Tenant Theme" subtitle="Theme resolved from gym branding profile">
-        <Button title="Dev: Switch to Member" onPress={() => devSwitchRole("member")} />
-        <Button title="Dev: Switch to Owner" onPress={() => devSwitchRole("gym_owner")} />
+        <Button testID="btn-dev-switch-member" title="Dev: Switch to Member" onPress={() => devSwitchRole("member")} />
+        <Button testID="btn-dev-switch-owner" title="Dev: Switch to Owner" onPress={() => devSwitchRole("gym_owner")} />
       </Card>
     </ScreenShell>
   );

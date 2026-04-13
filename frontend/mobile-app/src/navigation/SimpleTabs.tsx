@@ -38,6 +38,7 @@ function TabNavigator({ initialRouteName, children, screenOptions }: TabNavigato
             return (
               <Pressable
                 key={route.key}
+                testID={`tab-${route.name.toLowerCase()}`}
                 style={[styles.tab, isFocused ? { backgroundColor: theme.accent } : { backgroundColor: theme.panelSoft }]}
                 onPress={() => navigation.navigate(route.name)}
               >
