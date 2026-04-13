@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-export type AppRole = "trainer" | "member";
+export type AppRole = "gym_owner" | "trainer" | "member";
 
 type SessionState = {
   role: AppRole | null;
@@ -22,6 +22,7 @@ const RoleContext = createContext<SessionState>({
 
 function decodeMockJwt(token: string): { role: AppRole; gymSlug: string } {
   // In production this payload comes from real JWT claims returned by backend auth.
+  if (token === "owner-token") return { role: "gym_owner", gymSlug: "apex-athletics" };
   if (token === "trainer-token") return { role: "trainer", gymSlug: "apex-athletics" };
   if (token === "member-token") return { role: "member", gymSlug: "fitme-studio" };
   throw new Error("Invalid session token");
@@ -29,7 +30,7 @@ function decodeMockJwt(token: string): { role: AppRole; gymSlug: string } {
 
 async function bootstrapSession(): Promise<{ role: AppRole; gymSlug: string }> {
   // Placeholder async boot flow (SecureStore/AsyncStorage + refresh token) for MVP scaffold.
-  const token = "trainer-token";
+  const token = "owner-token";
   return decodeMockJwt(token);
 }
 

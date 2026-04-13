@@ -9,69 +9,51 @@ flowchart TB
     A[App.tsx] --> B[RoleProvider]
     B --> C[Session Bootstrap\nJWT claims: role + gym_slug]
     C --> D[ThemeProvider\nwhite-label colors per gym]
-    D --> E[NavigationContainer]
+    D --> O[OpsProvider\nshared slots + attendance state]
+    O --> E[NavigationContainer]
     E --> F[Root Native Stack]
 
-    F -->|role=trainer| TABS1[Trainer Bottom Tabs]
-    F -->|role=member| TABS2[Member Bottom Tabs]
-
-    TABS1 --> TS1[Dashboard]
-    TABS1 --> TS2[Schedule]
-    TABS1 --> TS3[Clients]
-    TABS1 --> TS4[HRMS]
-    TABS1 --> TS5[Billing]
-    TABS1 --> TS6[Settings]
-
-    F --> TD1[Trainer Stack: SessionDetails]
-    F --> TD2[Trainer Stack: ClientProfile]
-
-    TABS2 --> MS1[Home]
-    TABS2 --> MS2[Workouts]
-    TABS2 --> MS3[Nutrition]
-    TABS2 --> MS4[Community]
-    TABS2 --> MS5[Membership]
-    TABS2 --> MS6[Profile]
-
-    F --> MD1[Member Stack: WorkoutDetail]
-    F --> MD2[Member Stack: LiveWorkout]
+    F -->|gym_owner| OT[Owner Tabs]
+    F -->|trainer| TT[Trainer Tabs]
+    F -->|member| MT[Member Tabs]
 ```
 
-## 2) Trainer Screen Flow
+## 2) Gym Owner Flow (Top Priority)
 
 ```mermaid
 flowchart TD
-    TL[Session Loaded as Trainer] --> TD[Dashboard Tab]
-    TD --> SCH[Schedule Tab]
-    TD --> CL[Clients Tab]
-    TD --> HR[HRMS Tab]
-    TD --> BI[Billing Tab]
-    TD --> ST[Settings Tab]
+    SU[Signup] --> CG[Create Gym]
+    CG --> LU[Upload Logo]
+    LU --> ST[Select Theme]
+    ST --> OD[Owner Dashboard]
 
-    SCH --> SD[Session Details Stack Screen]
-    CL --> CP[Client Profile Stack Screen]
-
-    BI --> PF[Payment Failed State]
-    CL --> EC[Empty Clients State]
+    OD --> AT[Add Trainers]
+    OD --> AM[Add Members]
+    OD --> CS[Create Time Slots]
+    OD --> VA[View Attendance]
+    OD --> BI[Billing / Subscription]
 ```
 
-## 3) Member Screen Flow
+## 3) Connected Operational Flow
+
+```mermaid
+flowchart LR
+    OWNER[Gym Owner creates slot] --> TRAINER[Trainer sees schedule]
+    TRAINER --> MEMBER[Member attends slot]
+    MEMBER --> ATT[Attendance recorded]
+    ATT --> OWNER_VIEW[Owner attendance dashboard updates]
+    ATT --> MEMBER_VIEW[Member attendance history updates]
+```
+
+## 4) Member Attendance Flow
 
 ```mermaid
 flowchart TD
-    ML[Session Loaded as Member] --> MH[Home Tab]
-    MH --> WO[Workouts Tab]
-    MH --> NU[Nutrition Tab]
-    MH --> CO[Community Tab]
-    MH --> ME[Membership Tab]
-    MH --> PR[Profile Tab]
-
-    WO --> WD[Workout Detail Stack Screen]
-    WD --> LW[Live Workout Stack Screen]
-
-    WO --> OF[Offline State]
+    PR[Profile] --> AH[Attendance History]
+    AH --> ROWS[Date + Slot + Status]
 ```
 
-## 4) Global UX States
+## 5) Global UX States
 
 ```mermaid
 flowchart LR
@@ -82,8 +64,8 @@ flowchart LR
     RETRY --> LOADING
 ```
 
-## 5) Rules
+## 6) Rules
 
-- Role selection in production comes from backend JWT claims (`role`) and tenant context (`gym_slug`).
+- Role in production comes from backend JWT claims (`gym_owner`, `trainer`, `member`).
 - White-label theme is injected via `ThemeProvider` (dynamic token map per gym).
-- Empty, error, and offline states are first-class UX states in relevant screens.
+- Flows are connected via shared operational state: slots and attendance updates propagate across owner/trainer/member screens.

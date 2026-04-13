@@ -1,3 +1,13 @@
+export type OwnerTabParamList = {
+  Setup: undefined;
+  Dashboard: undefined;
+  Trainers: undefined;
+  Members: undefined;
+  Slots: undefined;
+  Attendance: undefined;
+  Billing: undefined;
+};
+
 export type TrainerTabParamList = {
   Dashboard: undefined;
   Schedule: undefined;
@@ -17,10 +27,12 @@ export type MemberTabParamList = {
 };
 
 export type RootStackParamList = {
+  OwnerTabs: undefined;
   TrainerTabs: undefined;
   MemberTabs: undefined;
   SessionDetails: undefined;
   ClientProfile: undefined;
   WorkoutDetail: undefined;
   LiveWorkout: undefined;
+  AttendanceHistory: undefined;
 };
