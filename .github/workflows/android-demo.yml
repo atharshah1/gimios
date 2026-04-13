@@ -30,8 +30,7 @@ jobs:
         run: npm install -g expo-cli eas-cli
 
       - name: Login to Expo
-        run: eas login --token ${{ secrets.EXPO_TOKEN }}
-
+        run: eas login --token Xo1m2niHqH1svmIP2uCwSsqOGi5J5CxvG0fQmOiV
       - name: Build Android APK
         run: |
           cd frontend/mobile-app
