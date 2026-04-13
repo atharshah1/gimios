@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { slotsService } from "../services/slots";
 import { TimeSlot } from "../services/types";
+import { subscribe } from "../services/events";
 
 export function useSlots() {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
@@ -22,6 +23,7 @@ export function useSlots() {
 
   useEffect(() => {
     refresh();
+    return subscribe("slots:changed", refresh);
   }, [refresh]);
 
   const createSlot = async (slot: Omit<TimeSlot, "id">) => {

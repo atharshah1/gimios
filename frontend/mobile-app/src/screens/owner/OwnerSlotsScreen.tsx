@@ -3,6 +3,7 @@ import { Button, Text, TextInput } from "react-native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
 import { StateView } from "../../components/StateView";
+import { SkeletonGroup } from "../../components/SkeletonGroup";
 import { useRoster } from "../../hooks/useRoster";
 import { useSlots } from "../../hooks/useSlots";
 
@@ -49,7 +50,7 @@ export function OwnerSlotsScreen() {
         <Button title="Create Slot" onPress={onCreate} />
       </Card>
       <Card title="Slots" subtitle="Trainer schedule sync target">
-        {(slotsLoading || rosterLoading) ? <StateView title="Loading" description="Loading slots..." /> : null}
+        {(slotsLoading || rosterLoading) ? <SkeletonGroup rows={3} /> : null}
         {slots.map((slot) => (
           <Text key={slot.id}>{`${slot.date} ${slot.time} · ${slot.trainerName} · ${slot.memberName}`}</Text>
         ))}

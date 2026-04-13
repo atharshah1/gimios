@@ -4,6 +4,7 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
 import { StateView } from "../../components/StateView";
+import { SkeletonGroup } from "../../components/SkeletonGroup";
 import { useAttendance } from "../../hooks/useAttendance";
 import { useAuth } from "../../hooks/useAuth";
 import { useSlots } from "../../hooks/useSlots";
@@ -19,7 +20,7 @@ export function ProfileScreen() {
     <ScreenShell title="Profile">
       <Card title={currentUser?.fullName ?? "Member"} subtitle="Pro Member since 2022">
         <Button title="View Attendance History" onPress={() => navigation.navigate("AttendanceHistory")} />
-        {slotsLoading ? <StateView title="Loading" description="Loading next slot..." /> : null}
+        {slotsLoading ? <SkeletonGroup rows={2} /> : null}
         {slotsError ? <StateView title="Error" description={slotsError} /> : null}
         {attendanceError ? <StateView title="Error" description={attendanceError} /> : null}
         {slots[0] ? (

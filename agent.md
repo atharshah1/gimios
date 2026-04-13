@@ -518,3 +518,60 @@ SUPER_ADMIN_EMAIL=admin@gymos.in
 ---
 
 *Last updated: April 2026 | Maintained by the GimIOS core team*
+
+---
+
+## 🔄 16. Mobile Event-Driven Sync & Loading Contract (Frontend ↔ Backend)
+
+To avoid polling-heavy behavior on mobile, use an **event-driven data sync model**.
+
+### Current Frontend Contract (implemented)
+
+- Hooks subscribe to domain events and refresh on mutation:
+  - `roster:changed`
+  - `slots:changed`
+  - `attendance:changed`
+  - `gym:changed`
+  - `session:changed`
+- Loading states in screens should render **skeleton blocks** (not only spinner/text) for perceived performance.
+
+### Preferred Backend Contract (when API is available)
+
+Implement one of the following in priority order:
+
+1. **WebSocket / SSE push events** (recommended)
+   - Emit domain events after write operations.
+   - Suggested event payload:
+
+```json
+{
+  "event": "slots.changed",
+  "gym_id": "uuid",
+  "entity_id": "slot-123",
+  "action": "created",
+  "timestamp": "2026-04-13T10:00:00Z"
+}
+```
+
+2. **Webhook-style internal event bus** (if websocket deferred)
+   - Backend modules publish domain events.
+   - Gateway/notification layer fans out to connected mobile clients.
+
+3. **Fallback (no push available)**
+   - Manual refresh only (user-initiated pull-to-refresh).
+   - Avoid high-frequency polling.
+
+### API Endpoints expected for Owner → Trainer → Member flow
+
+- `POST /timeslots` (owner creates slot)
+- `GET /timeslots?trainer_id=...&date=...` (trainer schedule)
+- `POST /attendance` (trainer/member mark attendance)
+- `GET /attendance?member_id=...` (member history)
+- `GET /attendance?gym_id=...` (owner overview)
+
+### UX Rule
+
+- Any screen that depends on async domain data (slots, roster, attendance) must show:
+  1. skeleton loading,
+  2. error state,
+  3. empty state.

@@ -3,6 +3,7 @@ import { Card } from "../../components/Card";
 import { MetricGrid } from "../../components/MetricGrid";
 import { ScreenShell } from "../../components/ScreenShell";
 import { StateView } from "../../components/StateView";
+import { SkeletonGroup } from "../../components/SkeletonGroup";
 import { useAttendance } from "../../hooks/useAttendance";
 import { useRoster } from "../../hooks/useRoster";
 import { useSlots } from "../../hooks/useSlots";
@@ -15,7 +16,7 @@ export function OwnerDashboardScreen() {
   return (
     <ScreenShell title="Owner Dashboard">
       <Card title="Operations Snapshot" subtitle="Live linked flow metrics">
-        {(rosterLoading || slotsLoading || attendanceLoading) ? <StateView title="Loading" description="Syncing dashboard metrics..." /> : null}
+        {(rosterLoading || slotsLoading || attendanceLoading) ? <SkeletonGroup rows={4} /> : null}
         {(rosterError || slotsError || attendanceError) ? <StateView title="Error" description={rosterError || slotsError || attendanceError || "Unknown error"} /> : null}
         <MetricGrid
           metrics={[

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { rosterService } from "../services/roster";
 import { Member, Trainer } from "../services/types";
+import { subscribe } from "../services/events";
 
 export function useRoster() {
   const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -24,6 +25,7 @@ export function useRoster() {
 
   useEffect(() => {
     refresh();
+    return subscribe("roster:changed", refresh);
   }, [refresh]);
 
   const addTrainer = async (name: string) => {

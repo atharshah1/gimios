@@ -3,6 +3,7 @@ import { Button, Text } from "react-native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
 import { StateView } from "../../components/StateView";
+import { SkeletonGroup } from "../../components/SkeletonGroup";
 import { useAttendance } from "../../hooks/useAttendance";
 import { useSlots } from "../../hooks/useSlots";
 
@@ -13,7 +14,7 @@ export function ScheduleScreen() {
   return (
     <ScreenShell title="Schedule">
       <Card title="All Sessions" subtitle="Slots created by Gym Owner">
-        {slotsLoading ? <StateView title="Loading" description="Loading schedule..." /> : null}
+        {slotsLoading ? <SkeletonGroup rows={3} /> : null}
         {slotsError ? <StateView title="Error" description={slotsError} /> : null}
         {attendanceError ? <StateView title="Error" description={attendanceError} /> : null}
         {slots.map((slot) => (

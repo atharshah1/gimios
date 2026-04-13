@@ -1,4 +1,5 @@
 import { db, delay } from "./store";
+import { emit } from "./events";
 
 export const rosterService = {
   async listTrainers() {
@@ -9,6 +10,7 @@ export const rosterService = {
     await delay();
     const next = { id: `trainer-${db.trainers.length + 1}`, name };
     db.trainers = [...db.trainers, next];
+    emit("roster:changed");
     return db.trainers;
   },
   async listMembers() {
@@ -19,6 +21,7 @@ export const rosterService = {
     await delay();
     const next = { id: `member-${db.members.length + 1}`, name };
     db.members = [...db.members, next];
+    emit("roster:changed");
     return db.members;
   },
 };

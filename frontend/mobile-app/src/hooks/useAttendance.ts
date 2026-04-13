@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AttendanceRecord } from "../services/types";
 import { attendanceService } from "../services/attendance";
+import { subscribe } from "../services/events";
 
 export function useAttendance() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
@@ -22,6 +23,7 @@ export function useAttendance() {
 
   useEffect(() => {
     refresh();
+    return subscribe("attendance:changed", refresh);
   }, [refresh]);
 
   const markAttendance = async (record: Omit<AttendanceRecord, "id">) => {

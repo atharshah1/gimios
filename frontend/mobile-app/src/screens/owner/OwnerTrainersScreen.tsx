@@ -3,6 +3,7 @@ import { Button, Text, TextInput } from "react-native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
 import { StateView } from "../../components/StateView";
+import { SkeletonGroup } from "../../components/SkeletonGroup";
 import { useRoster } from "../../hooks/useRoster";
 
 export function OwnerTrainersScreen() {
@@ -29,7 +30,7 @@ export function OwnerTrainersScreen() {
         <Button title="Save Trainer" onPress={onSubmit} />
       </Card>
       <Card title="Trainer List" subtitle="HRMS management">
-        {loading ? <StateView title="Loading" description="Loading trainers..." /> : null}
+        {loading ? <SkeletonGroup rows={3} /> : null}
         {trainers.map((trainer) => (
           <Text key={trainer.id}>{trainer.name}</Text>
         ))}

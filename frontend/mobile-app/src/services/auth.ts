@@ -1,5 +1,6 @@
 import { db, delay } from "./store";
 import { AppRole } from "./types";
+import { emit } from "./events";
 
 export const authService = {
   async fetchSession() {
@@ -14,6 +15,7 @@ export const authService = {
       member: { id: "member-1", fullName: "Mike Ryan" },
     } as const;
     db.session = { ...db.session, role, id: map[role].id, fullName: map[role].fullName };
+    emit("session:changed");
     return db.session;
   },
 };
