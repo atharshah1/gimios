@@ -1,0 +1,108 @@
+name: Mobile Android Demo Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_profile:
+        description: "EAS build profile from eas.json"
+        required: false
+        default: "preview"
+      app_role:
+        description: "Role to persist for demo navigation (gym_owner/trainer/member)"
+        required: false
+        default: "gym_owner"
+
+jobs:
+  android-demo-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/mobile-app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/mobile-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure eas.json exists for CI profile
+        run: |
+          if [ ! -f eas.json ]; then
+            cat > eas.json <<'JSON'
+            {
+              "cli": {
+                "version": ">= 10.0.0"
+              },
+              "build": {
+                "preview": {
+                  "distribution": "internal",
+                  "android": {
+                    "buildType": "apk"
+                  }
+                },
+                "production": {
+                  "android": {
+                    "buildType": "app-bundle"
+                  }
+                }
+              }
+            }
+            JSON
+          fi
+
+      - name: Setup Expo / EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android (frontend-only mock mode)
+        env:
+          DEMO_ROLE: ${{ inputs.app_role }}
+        run: |
+          if [ -n "$DEMO_ROLE" ]; then
+            echo "DEMO_DEFAULT_ROLE=$DEMO_ROLE" >> .env
+          fi
+
+          eas build \
+            --platform android \
+            --profile "${{ inputs.build_profile }}" \
+            --non-interactive \
+            --wait \
+            --json > build-result.json
+
+      - name: Download build artifact
+        run: |
+          BUILD_ID=$(node -e "const f=require('./build-result.json');console.log(f.id)")
+          BUILD_URL=$(node -e "const f=require('./build-result.json');console.log(f.artifacts?.buildUrl || '')")
+          APP_ROLE="${{ inputs.app_role }}"
+
+          echo "Build ID: $BUILD_ID"
+          echo "Build URL: $BUILD_URL"
+
+          eas build:download --id "$BUILD_ID" --path demo-android-build.apk --non-interactive
+
+          cat > demo-build-info.txt <<EOF
+          Build ID: $BUILD_ID
+          Build URL: $BUILD_URL
+          App role preset: $APP_ROLE
+          Demo mode: Frontend-only (mock services, no backend)
+          EOF
+
+      - name: Upload demo archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-demo-build
+          path: |
+            frontend/mobile-app/demo-android-build.apk
+            frontend/mobile-app/demo-build-info.txt
+            frontend/mobile-app/docs/TESTING_IDS.md
+          if-no-files-found: error

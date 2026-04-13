@@ -19,12 +19,17 @@ export function ProfileScreen() {
   return (
     <ScreenShell title="Profile" onRefresh={async () => { await Promise.all([refreshSlots(), refreshAttendance()]); }}>
       <Card title={currentUser?.fullName ?? "Member"} subtitle="Pro Member since 2022">
-        <Button title="View Attendance History" onPress={() => navigation.navigate("AttendanceHistory")} />
+        <Button
+          testID="btn-open-attendance-history"
+          title="View Attendance History"
+          onPress={() => navigation.navigate("AttendanceHistory")}
+        />
         {slotsLoading ? <SkeletonGroup rows={2} /> : null}
         {slotsError ? <StateView title="Error" description={slotsError} /> : null}
         {attendanceError ? <StateView title="Error" description={attendanceError} /> : null}
         {slots[0] ? (
           <Button
+            testID="btn-attend-next-slot"
             title="Attend Next Slot"
             onPress={() =>
               markAttendance({
@@ -37,8 +42,8 @@ export function ProfileScreen() {
             }
           />
         ) : null}
-        <Button title="Dev: Switch to Trainer" onPress={() => devSwitchRole("trainer")} />
-        <Button title="Dev: Switch to Owner" onPress={() => devSwitchRole("gym_owner")} />
+        <Button testID="btn-profile-switch-trainer" title="Dev: Switch to Trainer" onPress={() => devSwitchRole("trainer")} />
+        <Button testID="btn-profile-switch-owner" title="Dev: Switch to Owner" onPress={() => devSwitchRole("gym_owner")} />
       </Card>
     </ScreenShell>
   );
