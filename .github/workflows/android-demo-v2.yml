@@ -1,0 +1,50 @@
+name: Android Demo Build (Fixed)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_profile:
+        description: "EAS build profile"
+        required: true
+        default: "preview"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20 (REQUIRED for eas-cli)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd frontend/mobile-app
+          npm ci || npm install
+
+      - name: Install EAS CLI (no expo-cli needed)
+        run: npm install -g eas-cli
+
+      - name: Verify versions
+        run: |
+          node -v
+          npm -v
+          eas --version
+
+      - name: Login to Expo
+        run: eas login --token ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android APK
+        run: |
+          cd frontend/mobile-app
+          eas build --platform android \
+            --profile ${{ github.event.inputs.build_profile }} \
+            --non-interactive
+
+      - name: Done
+        run: echo "Build triggered. Check Expo dashboard for APK link."
