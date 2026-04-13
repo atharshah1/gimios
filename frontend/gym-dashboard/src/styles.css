@@ -26,3 +26,4 @@ input { width: 100%; margin: 6px 0; padding: 8px; border-radius: 8px; border: 1p
 .chart-labels { display: flex; justify-content: space-between; color: #b8c4bc; font-size: 12px; margin-top: 6px; }
 .calendar-grid { display: grid; gap: 4px; margin-top: 12px; }
 .calendar-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; border-top: 1px solid #223127; padding: 6px 0; }
+.error-text { color: #ffb4b4; font-size: 12px; margin: 4px 0 0; }

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { TrendCharts } from "../components/Charts";
 import { EmptyState, ErrorState, LoadingSkeleton, SectionCard } from "../components/StateViews";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { Input } from "../components/ui/Input";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useAttendance } from "../hooks/useAttendance";
 import { useBilling } from "../hooks/useBilling";
@@ -11,6 +14,7 @@ import { billingService } from "../services/billing.service";
 import { gymService } from "../services/gym.service";
 import { slotsService } from "../services/slots.service";
 import type { AttendanceRecord, Member, Slot, Trainer } from "../types";
+import { trainerSchema } from "../validation/schemas";
 
 export function OwnerPanel({ tab }: { tab: string }) {
   const { settings, trainers, members } = useGym();
@@ -19,6 +23,7 @@ export function OwnerPanel({ tab }: { tab: string }) {
   const billing = useBilling();
   const analytics = useAnalytics();
   const [quickName, setQuickName] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
 
   if (settings.loading) return <LoadingSkeleton />;
   if (settings.error) return <ErrorState message={settings.error} />;
@@ -32,11 +37,11 @@ export function OwnerPanel({ tab }: { tab: string }) {
       <>
         <h1>{settings.data?.gymName} · Owner Dashboard</h1>
         <div className="metric-grid">
-          <article className="card"><h4>Total Members</h4><p>{metric.totalMembers}</p></article>
-          <article className="card"><h4>Active Trainers</h4><p>{metric.activeTrainers}</p></article>
-          <article className="card"><h4>Today's Attendance %</h4><p>{metric.attendancePercent}%</p></article>
-          <article className="card"><h4>Revenue (monthly)</h4><p>₹{metric.monthlyRevenue.toLocaleString()}</p></article>
-          <article className="card"><h4>Active Subscriptions</h4><p>{metric.activeSubscriptions}</p></article>
+          <Card><h4>Total Members</h4><p>{metric.totalMembers}</p></Card>
+          <Card><h4>Active Trainers</h4><p>{metric.activeTrainers}</p></Card>
+          <Card><h4>Today's Attendance %</h4><p>{metric.attendancePercent}%</p></Card>
+          <Card><h4>Revenue (monthly)</h4><p>₹{metric.monthlyRevenue.toLocaleString()}</p></Card>
+          <Card><h4>Active Subscriptions</h4><p>{metric.activeSubscriptions}</p></Card>
         </div>
         <TrendCharts data={analytics.trends.data} />
       </>
@@ -49,10 +54,23 @@ export function OwnerPanel({ tab }: { tab: string }) {
     const trainerRows = (trainers.data ?? []) as Trainer[];
     return (
       <SectionCard title="Trainer Management" actions={<button onClick={() => void trainers.refresh()}>Refresh</button>}>
-        <form onSubmit={(e) => { e.preventDefault(); if (!quickName.trim()) return; void gymService.upsertTrainer({ name: quickName }); setQuickName(""); }}>
-          <input value={quickName} onChange={(e) => setQuickName(e.target.value)} placeholder="Add trainer" />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const result = trainerSchema.parse({ name: quickName });
+            if (!result.ok) {
+              setFormError(result.message);
+              return;
+            }
+            setFormError(null);
+            void gymService.upsertTrainer({ name: quickName.trim() });
+            setQuickName("");
+          }}
+        >
+          <Input value={quickName} onChange={(e) => setQuickName(e.target.value)} placeholder="Add trainer" />
+          {formError ? <p className="error-text">{formError}</p> : null}
         </form>
-        {trainerRows.map((t) => <div key={t.id} className="row"><span>{t.name} · sessions {t.sessionsHandled} · attendance {t.attendanceRate}% · clients {t.activeClients}</span><button onClick={() => void gymService.removeTrainer(t.id)}>Remove</button></div>)}
+        {trainerRows.map((t) => <div key={t.id} className="row"><span>{t.name} · sessions {t.sessionsHandled} · attendance {t.attendanceRate}% · clients {t.activeClients}</span><Button onClick={() => void gymService.removeTrainer(t.id)}>Remove</Button></div>)}
       </SectionCard>
     );
   }
