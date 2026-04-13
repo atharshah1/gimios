@@ -26,12 +26,18 @@ jobs:
           cd frontend/mobile-app
           npm install
 
-      - name: Install Expo CLI
+      - name: Install Expo & EAS CLI
         run: npm install -g expo-cli eas-cli
 
       - name: Login to Expo
-        run: eas login --token Xo1m2niHqH1svmIP2uCwSsqOGi5J5CxvG0fQmOiV
+        run: eas login --token ${{ secrets.EXPO_TOKEN }}
+
       - name: Build Android APK
         run: |
           cd frontend/mobile-app
-          eas build --platform android --profile ${{ github.event.inputs.build_profile }} --non-interactive
+          eas build --platform android \
+            --profile ${{ github.event.inputs.build_profile }} \
+            --non-interactive
+
+      - name: Print build link
+        run: echo "Check Expo dashboard for APK download"
