@@ -1,0 +1,38 @@
+name: Android Demo Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_profile:
+        description: "EAS build profile"
+        required: true
+        default: "preview"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          cd frontend/mobile-app
+          npm install
+
+      - name: Install Expo CLI
+        run: npm install -g expo-cli eas-cli
+
+      - name: Login to Expo
+        run: eas login --token ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android APK
+        run: |
+          cd frontend/mobile-app
+          eas build --platform android --profile ${{ github.event.inputs.build_profile }} --non-interactive
