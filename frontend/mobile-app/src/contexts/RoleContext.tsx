@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { AppRole, SessionUser } from "../services/api";
 import { authService } from "../services/auth";
+import { getPersistedRole, setPersistedRole } from "../services/persistence";
 
 type SessionState = {
   role: AppRole | null;
@@ -34,10 +35,15 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     authService
       .fetchSession()
-      .then((session) => {
-        setRole(session.role);
-        setGymSlug(session.gymSlug);
-        setCurrentUser(session);
+      .then(async (session) => {
+        const persistedRole = getPersistedRole();
+        const resolvedSession = persistedRole && persistedRole !== session.role
+          ? await authService.switchRole(persistedRole)
+          : session;
+        setRole(resolvedSession.role);
+        setGymSlug(resolvedSession.gymSlug);
+        setCurrentUser(resolvedSession);
+        setPersistedRole(resolvedSession.role);
       })
       .catch(() => {
         setError("Could not restore your session. Please try again.");
@@ -57,6 +63,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     setRole(session.role);
     setGymSlug(session.gymSlug);
     setCurrentUser(session);
+    setPersistedRole(session.role);
     setLoading(false);
   };
 

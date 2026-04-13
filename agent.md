@@ -594,3 +594,4 @@ When shifting from mobile-first to web-first implementation:
   - Monitor active gyms and revenue
 
 For MVP, mock state is acceptable in FE components; later wire APIs from `backend/app/api/*`.
+- Persistence note: native mobile durable session storage should use AsyncStorage/SecureStore in a later phase; current implementation keeps a lightweight persistence adapter contract without adding native storage dependencies yet.
