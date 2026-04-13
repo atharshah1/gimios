@@ -1,20 +1,33 @@
+import { gymApi, hrmsApi, usersApi } from "../api";
 import { emit } from "../events";
 import type { Member, Trainer } from "../types";
-import { delay, store } from "./store";
+import { withApiFallback } from "./http.service";
+import { delay, persistStore, store } from "./store";
 
 export const gymService = {
   async getSettings() {
-    await delay();
-    return store.settings;
+    return withApiFallback(
+      () => gymApi.get("self"),
+      async () => {
+        await delay();
+        return store.settings;
+      },
+    );
   },
   async updateSettings(next: Partial<typeof store.settings>) {
     await delay();
     store.settings = { ...store.settings, ...next };
+    persistStore();
     emit("gym:changed");
   },
   async getTrainers() {
-    await delay();
-    return store.trainers;
+    return withApiFallback(
+      () => hrmsApi.listTrainers(),
+      async () => {
+        await delay();
+        return store.trainers;
+      },
+    );
   },
   async upsertTrainer(input: Partial<Trainer> & Pick<Trainer, "name">) {
     await delay();
@@ -31,16 +44,23 @@ export const gymService = {
         status: "active",
       });
     }
+    persistStore();
     emit("gym:changed");
   },
   async removeTrainer(id: string) {
     await delay();
     store.trainers = store.trainers.filter((t) => t.id !== id);
+    persistStore();
     emit("gym:changed");
   },
   async getMembers() {
-    await delay();
-    return store.members;
+    return withApiFallback(
+      () => usersApi.list(),
+      async () => {
+        await delay();
+        return store.members;
+      },
+    );
   },
   async upsertMember(input: Partial<Member> & Pick<Member, "name">) {
     await delay();
@@ -56,11 +76,13 @@ export const gymService = {
         attendanceHistory: [],
       });
     }
+    persistStore();
     emit("gym:changed");
   },
   async removeMember(id: string) {
     await delay();
     store.members = store.members.filter((m) => m.id !== id);
+    persistStore();
     emit("gym:changed");
   },
 };

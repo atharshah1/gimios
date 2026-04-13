@@ -10,6 +10,7 @@ import { attendanceService } from "../services/attendance.service";
 import { billingService } from "../services/billing.service";
 import { gymService } from "../services/gym.service";
 import { slotsService } from "../services/slots.service";
+import type { AttendanceRecord, Member, Slot, Trainer } from "../types";
 
 export function OwnerPanel({ tab }: { tab: string }) {
   const { settings, trainers, members } = useGym();
@@ -45,12 +46,13 @@ export function OwnerPanel({ tab }: { tab: string }) {
   if (tab === "Trainers") {
     if (trainers.loading) return <LoadingSkeleton />;
     if (trainers.error) return <ErrorState message={trainers.error} />;
+    const trainerRows = (trainers.data ?? []) as Trainer[];
     return (
       <SectionCard title="Trainer Management" actions={<button onClick={() => void trainers.refresh()}>Refresh</button>}>
         <form onSubmit={(e) => { e.preventDefault(); if (!quickName.trim()) return; void gymService.upsertTrainer({ name: quickName }); setQuickName(""); }}>
           <input value={quickName} onChange={(e) => setQuickName(e.target.value)} placeholder="Add trainer" />
         </form>
-        {trainers.data?.map((t) => <div key={t.id} className="row"><span>{t.name} · sessions {t.sessionsHandled} · attendance {t.attendanceRate}% · clients {t.activeClients}</span><button onClick={() => void gymService.removeTrainer(t.id)}>Remove</button></div>)}
+        {trainerRows.map((t) => <div key={t.id} className="row"><span>{t.name} · sessions {t.sessionsHandled} · attendance {t.attendanceRate}% · clients {t.activeClients}</span><button onClick={() => void gymService.removeTrainer(t.id)}>Remove</button></div>)}
       </SectionCard>
     );
   }
@@ -58,9 +60,10 @@ export function OwnerPanel({ tab }: { tab: string }) {
   if (tab === "Members") {
     if (members.loading) return <LoadingSkeleton />;
     if (members.error) return <ErrorState message={members.error} />;
+    const memberRows = (members.data ?? []) as Member[];
     return (
       <SectionCard title="Member CRM" actions={<button onClick={() => void members.refresh()}>Refresh</button>}>
-        {members.data?.map((m) => <div key={m.id} className="row"><span>{m.name} · {m.membershipStatus} · payment {m.paymentStatus} · history {m.attendanceHistory.length}</span><button onClick={() => void gymService.removeMember(m.id)}>Remove</button></div>)}
+        {memberRows.map((m) => <div key={m.id} className="row"><span>{m.name} · {m.membershipStatus} · payment {m.paymentStatus} · history {m.attendanceHistory.length}</span><button onClick={() => void gymService.removeMember(m.id)}>Remove</button></div>)}
       </SectionCard>
     );
   }
@@ -68,10 +71,10 @@ export function OwnerPanel({ tab }: { tab: string }) {
   if (tab === "Schedule") {
     if (slots.loading || trainers.loading || members.loading) return <LoadingSkeleton />;
     if (!slots.data) return <EmptyState title="No slots" />;
-    const slotData = slots.data ?? [];
+    const slotData = (slots.data ?? []) as Slot[];
     return (
       <SectionCard title="Schedule & Calendar" actions={<button onClick={() => void slots.refresh()}>Refresh</button>}>
-        <button onClick={() => void slotsService.create({ title: "New Batch", date: "2026-04-14", startHour: 7, durationMin: 60, trainerId: trainers.data?.[0]?.id ?? "t1", memberIds: members.data?.slice(0, 2).map((m) => m.id) ?? [] })}>Create 7AM slot</button>
+        <button onClick={() => void slotsService.create({ title: "New Batch", date: "2026-04-14", startHour: 7, durationMin: 60, trainerId: ((trainers.data ?? []) as Trainer[])[0]?.id ?? "t1", memberIds: ((members.data ?? []) as Member[]).slice(0, 2).map((m) => m.id) })}>Create 7AM slot</button>
         <div className="calendar-grid">
           {Array.from({ length: 16 }, (_, i) => i + 6).map((hour) => (
             <div key={hour} className="calendar-row">
@@ -87,10 +90,11 @@ export function OwnerPanel({ tab }: { tab: string }) {
   if (tab === "Attendance") {
     if (attendance.loading || analytics.reports.loading) return <LoadingSkeleton />;
     if (!attendance.data || !analytics.reports.data) return <EmptyState title="No attendance data" />;
+    const attendanceRows = attendance.data as AttendanceRecord[];
     return (
       <SectionCard title="Attendance Insights" actions={<button onClick={() => void attendance.refresh()}>Refresh</button>}>
         <button onClick={() => void attendanceService.mark("m1", "t1", "s1", "present")}>Mark sample attendance</button>
-        {attendance.data.map((a) => <div key={a.id} className="row"><span>{a.date} · member {a.memberId} · trainer {a.trainerId} · {a.status}</span></div>)}
+        {attendanceRows.map((a) => <div key={a.id} className="row"><span>{a.date} · member {a.memberId} · trainer {a.trainerId} · {a.status}</span></div>)}
         <p>Absentee trend: {analytics.reports.data.absenteeTrend}</p>
         <p>Peak hours: {analytics.reports.data.peakHours}</p>
       </SectionCard>

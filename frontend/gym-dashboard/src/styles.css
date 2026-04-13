@@ -5,8 +5,8 @@ button, input { font: inherit; }
 
 .app-shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
 .sidebar { border-right: 1px solid #223127; padding: 16px; display: flex; flex-direction: column; gap: 8px; background: #101612; }
-.sidebar button { text-align: left; background: transparent; color: #d5dfd8; border: 1px solid #27352b; border-radius: 8px; padding: 8px 10px; }
-.sidebar button.active { background: #8bff2a22; color: #8BFF2A; border-color: #8BFF2A; }
+.sidebar a { text-decoration: none; text-align: left; background: transparent; color: #d5dfd8; border: 1px solid #27352b; border-radius: 8px; padding: 8px 10px; }
+.sidebar a.active { background: #8bff2a22; color: #8BFF2A; border-color: #8BFF2A; }
 .content { padding: 18px; }
 .topbar { display: flex; gap: 8px; margin-bottom: 12px; }
 .topbar button, .card button { background: #8BFF2A; color: #102012; border: none; border-radius: 8px; padding: 8px 10px; font-weight: 700; }
@@ -23,5 +23,6 @@ button, input { font: inherit; }
 input { width: 100%; margin: 6px 0; padding: 8px; border-radius: 8px; border: 1px solid #2f3c31; background: #0f1311; color: white; }
 .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
 .chart-box { background: #141a16; border: 1px solid #253026; border-radius: 12px; padding: 10px; }
+.chart-labels { display: flex; justify-content: space-between; color: #b8c4bc; font-size: 12px; margin-top: 6px; }
 .calendar-grid { display: grid; gap: 4px; margin-top: 12px; }
 .calendar-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; border-top: 1px solid #223127; padding: 6px 0; }

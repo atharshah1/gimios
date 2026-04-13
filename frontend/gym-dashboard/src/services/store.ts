@@ -1,9 +1,21 @@
 import type { AttendanceRecord, GymSettings, Member, Payment, Plan, PlatformGym, PlatformUser, Slot, Trainer, TrendPoint } from "../types";
+import { readPersisted, writePersisted } from "./persistence";
 
 export const delay = (ms = 180) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const store = {
-  auth: { user: { id: "u1", name: "Neha Owner", role: "gym_owner" as const } },
+type PersistedState = {
+  settings: GymSettings;
+  trainers: Trainer[];
+  members: Member[];
+  slots: Slot[];
+  attendance: AttendanceRecord[];
+  plans: Plan[];
+  payments: Payment[];
+};
+type SessionUser = { id: string; name: string; role: "gym_owner" | "super_admin" };
+type SessionState = { user: SessionUser | null; token: string };
+
+const initialState: PersistedState = {
   settings: {
     gymName: "Apex Athletics",
     logoUrl: "https://placehold.co/96x96",
@@ -37,6 +49,13 @@ export const store = {
     { id: "pay1", memberId: "m1", amount: 2500, status: "paid", date: "2026-04-03" },
     { id: "pay2", memberId: "m2", amount: 2500, status: "pending", date: "2026-04-09" },
   ] as Payment[],
+};
+
+const persisted = readPersisted<PersistedState>("gymos.web.state", initialState);
+
+export const store = {
+  auth: readPersisted<SessionState>("gymos.web.session", { user: { id: "u1", name: "Neha Owner", role: "gym_owner" }, token: "demo-token" }),
+  ...persisted,
   trends: [
     { label: "Mon", attendance: 82, revenue: 18000, members: 118 },
     { label: "Tue", attendance: 79, revenue: 19500, members: 121 },
@@ -57,3 +76,16 @@ export const store = {
     { id: "pu3", name: "Maya", role: "member", gymName: "Apex Athletics", lastActive: "2026-04-12" },
   ] as PlatformUser[],
 };
+
+export function persistStore() {
+  writePersisted("gymos.web.state", {
+    settings: store.settings,
+    trainers: store.trainers,
+    members: store.members,
+    slots: store.slots,
+    attendance: store.attendance,
+    plans: store.plans,
+    payments: store.payments,
+  });
+  writePersisted("gymos.web.session", store.auth);
+}
