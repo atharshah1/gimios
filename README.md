@@ -38,3 +38,4 @@ Swagger UI: `http://localhost:8000/docs`
 ## See Also
 
 - [agent.md](./agent.md) — full architecture plan, feature breakdown, and implementation roadmap
+- [frontend/mobile-app/SCREEN_FLOW.md](./frontend/mobile-app/SCREEN_FLOW.md) — mobile architecture and trainer/member screen flow diagrams
