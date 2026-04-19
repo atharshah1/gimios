@@ -40,8 +40,8 @@ export function SessionDetailsScreen() {
     return () => clearTimeout(t);
   }, [savedKey]);
 
-  // Parse the session key: date:time:trainerId
-  const [date, time] = sessionKey.split(":");
+  // Parse the session key: date|time|trainerId (pipe separator avoids conflict with time's colon)
+  const [date, time] = sessionKey.split("|");
 
   const sessionSlots = slots.filter(
     (s) => s.date === date && s.time === time

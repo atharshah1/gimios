@@ -22,6 +22,7 @@ type HomeNavProp = CompositeNavigationProp<
 function getWeekDates(dateStr: string): string[] {
   const d = new Date(dateStr + "T00:00:00");
   const day = d.getDay();
+  // Sunday (0) needs -6 to reach Monday; other days need (1 - day)
   const diffToMon = day === 0 ? -6 : 1 - day;
   return Array.from({ length: 7 }, (_, i) => {
     const dt = new Date(d);
@@ -58,6 +59,7 @@ export function HomeScreen() {
 
   const memberAttendance = attendance.filter(r => r.memberId === (currentUser?.id ?? "member-1"));
   const weekDates = getWeekDates(TODAY);
+  // Bar height: 90=present, 24=absent/missed, 8=no session
   const activityData = weekDates.map(date => {
     const records = memberAttendance.filter(r => r.date === date);
     if (records.length === 0) return 8;

@@ -114,11 +114,11 @@ export function LiveWorkoutScreen() {
         <View style={styles.progressHeader}>
           <Text style={[styles.progressLabel, { color: theme.text }]}>Exercise {currentEx + 1} of {totalExercises}</Text>
           <Text style={[styles.progressPct, { color: theme.accent }]}>
-            {Math.round(((currentEx) / totalExercises) * 100)}%
+            {Math.round(((currentEx + 1) / totalExercises) * 100)}%
           </Text>
         </View>
         <View style={[styles.progressTrack, { backgroundColor: theme.border }]}>
-          <View style={[styles.progressFill, { backgroundColor: theme.accent, width: `${(currentEx / totalExercises) * 100}%` }]} />
+          <View style={[styles.progressFill, { backgroundColor: theme.accent, width: `${((currentEx + 1) / totalExercises) * 100}%` }]} />
         </View>
       </View>
 

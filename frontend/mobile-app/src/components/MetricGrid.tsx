@@ -20,7 +20,7 @@ export function MetricGrid({ metrics }: { metrics: Metric[] }) {
           onPress={metric.onPress}
           disabled={!metric.onPress}
         >
-          <Text style={[styles.value, { color: metric.accent ? theme.accent : theme.text }]}>{metric.value}</Text>
+          <Text style={[styles.value, { color: theme.text }]}>{metric.value}</Text>
           <Text style={[styles.label, { color: theme.muted }]}>{metric.label}</Text>
           {metric.onPress ? <Text style={[styles.chevron, { color: theme.muted }]}>›</Text> : null}
         </Pressable>

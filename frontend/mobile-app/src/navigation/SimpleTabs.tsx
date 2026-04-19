@@ -10,6 +10,7 @@ import {
   useNavigationBuilder,
 } from "@react-navigation/native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useGymTheme } from "../contexts/ThemeContext";
 
 const TAB_ICONS: Record<string, string> = {
@@ -44,6 +45,7 @@ type TabNavigatorProps = DefaultNavigatorOptions<
 
 function TabNavigator({ initialRouteName, children, screenOptions }: TabNavigatorProps) {
   const theme = useGymTheme();
+  const insets = useSafeAreaInsets();
   const { state, descriptors, navigation, NavigationContent } = useNavigationBuilder(TabRouter, {
     children,
     screenOptions,
@@ -54,7 +56,7 @@ function TabNavigator({ initialRouteName, children, screenOptions }: TabNavigato
     <NavigationContent>
       <View style={{ flex: 1, backgroundColor: theme.background }}>
         <View style={{ flex: 1 }}>{descriptors[state.routes[state.index].key].render()}</View>
-        <View style={[styles.tabBar, { borderTopColor: theme.border, backgroundColor: theme.panel }]}>
+        <View style={[styles.tabBar, { borderTopColor: theme.border, backgroundColor: theme.panel, paddingBottom: Math.max(insets.bottom, 8) }]}>
           {state.routes.map((route, index) => {
             const isFocused = state.index === index;
             const icon = TAB_ICONS[route.name] ?? "•";
@@ -86,8 +88,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderTopWidth: 1,
     paddingHorizontal: 8,
-    paddingVertical: 8,
-    paddingBottom: 16,
+    paddingTop: 8,
     gap: 6,
   },
   tab: { flex: 1, borderRadius: 12, paddingVertical: 7, alignItems: "center", gap: 2 },

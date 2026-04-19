@@ -30,7 +30,7 @@ export function DashboardScreen() {
   const uniqueClients = new Set(mySlots.map(s => s.memberId)).size;
 
   const goToSession = (time: string) => {
-    const sessionKey = `${TODAY}:${time}:${currentUser?.id ?? "trainer-1"}`;
+    const sessionKey = `${TODAY}|${time}|${currentUser?.id ?? "trainer-1"}`;
     navigation.navigate("SessionDetails", { sessionKey });
   };
 
