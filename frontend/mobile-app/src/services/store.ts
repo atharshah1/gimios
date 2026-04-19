@@ -1,4 +1,4 @@
-import { AttendanceRecord, GymProfile, Member, SessionUser, TimeSlot, Trainer } from "./types";
+import { AttendanceRecord, GymProfile, Member, SessionUser, TimeSlot, Trainer, Workout } from "./types";
 
 export const delay = (ms = 120) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -12,6 +12,7 @@ export const db: {
   members: Member[];
   slots: TimeSlot[];
   attendance: AttendanceRecord[];
+  workouts: Workout[];
 } = {
   session: { id: "owner-1", fullName: "Apex Owner", role: "gym_owner", gymSlug: "apex-athletics" },
   gymProfile: { gymName: "Apex Athletics", logoUrl: "https://example.com/logo.png", themePrimary: "#6366F1" },
@@ -51,5 +52,13 @@ export const db: {
     { id: "att-6", date: "2026-04-15", time: "09:00", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
     { id: "att-7", date: "2026-04-16", time: "09:00", slot: "09:00 - Alex Morgan", status: "absent", memberId: "member-1", memberName: "Mike Ryan" },
     { id: "att-8", date: "2026-04-17", time: "09:00", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
+  ],
+  workouts: [
+    { id: "wkt-1", name: "Full Body Shred", duration: "45 min", intensity: "High", exercises: 8, category: "Strength" },
+    { id: "wkt-2", name: "Upper Body Power", duration: "40 min", intensity: "High", exercises: 6, category: "Strength" },
+    { id: "wkt-3", name: "Core Crusher", duration: "30 min", intensity: "Medium", exercises: 5, category: "Core" },
+    { id: "wkt-4", name: "Leg Day Blast", duration: "50 min", intensity: "High", exercises: 7, category: "Strength" },
+    { id: "wkt-5", name: "HIIT Cardio Burn", duration: "25 min", intensity: "High", exercises: 10, category: "Cardio" },
+    { id: "wkt-6", name: "Mobility & Stretch", duration: "20 min", intensity: "Low", exercises: 8, category: "Mobility" },
   ],
 };

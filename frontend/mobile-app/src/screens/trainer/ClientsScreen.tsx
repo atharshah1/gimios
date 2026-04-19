@@ -4,35 +4,52 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/types";
 import { Card } from "../../components/Card";
 import { StateView } from "../../components/StateView";
+import { SkeletonGroup } from "../../components/SkeletonGroup";
 import { ScreenShell } from "../../components/ScreenShell";
 import { PillBadge } from "../../components/PillBadge";
-import { trainerClients } from "../../data/mock";
+import { useRoster } from "../../hooks/useRoster";
+import { useSlots } from "../../hooks/useSlots";
 import { useGymTheme } from "../../contexts/ThemeContext";
 
 export function ClientsScreen() {
   const theme = useGymTheme();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { members, loading, error, refresh } = useRoster();
+  const { slots } = useSlots();
+
+  const getLastSession = (memberId: string) => {
+    const memberSlots = slots
+      .filter((s) => s.memberId === memberId)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    return memberSlots[0] ? `${memberSlots[0].date} · ${memberSlots[0].time}` : "No sessions yet";
+  };
 
   return (
-    <ScreenShell title="Clients">
-      {trainerClients.length === 0 ? (
+    <ScreenShell title="Clients" onRefresh={refresh}>
+      {loading ? <SkeletonGroup rows={4} /> : null}
+      {error ? <StateView title="Error" description={error} /> : null}
+      {!loading && members.length === 0 ? (
         <StateView title="No clients assigned" description="Once an owner assigns members, they appear here." />
       ) : (
-        <Card title={`My Clients (${trainerClients.length})`} subtitle="Tap a client to view their profile">
-          {trainerClients.map((client, i) => (
+        <Card title={`Client Directory (${members.length})`} subtitle="Tap a client to view their profile">
+          {members.map((member, i) => (
             <Pressable
-              key={client.name}
-              style={[styles.item, { borderColor: theme.border, borderBottomWidth: i < trainerClients.length - 1 ? 1 : 0 }]}
-              onPress={() => navigation.navigate("ClientProfile")}
+              key={member.id}
+              style={({ pressed }) => [
+                styles.item,
+                { borderColor: theme.border, borderBottomWidth: i < members.length - 1 ? 1 : 0 },
+                pressed && { opacity: 0.7 },
+              ]}
+              onPress={() => navigation.navigate("ClientProfile", { clientId: member.id, clientName: member.name })}
             >
               <View style={[styles.avatar, { backgroundColor: `${theme.accent}22` }]}>
-                <Text style={[styles.avatarText, { color: theme.accent }]}>{client.name.charAt(0)}</Text>
+                <Text style={[styles.avatarText, { color: theme.accent }]}>{member.name.charAt(0)}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.name, { color: theme.text }]}>{client.name}</Text>
-                <Text style={[styles.sub, { color: theme.muted }]}>Active Client</Text>
+                <Text style={[styles.name, { color: theme.text }]}>{member.name}</Text>
+                <Text style={[styles.sub, { color: theme.muted }]}>{getLastSession(member.id)}</Text>
               </View>
-              <PillBadge label={client.status} type={client.status === "Active" ? "success" : "danger"} />
+              <PillBadge label="Active" type="success" />
             </Pressable>
           ))}
         </Card>
