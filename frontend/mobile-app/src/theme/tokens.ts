@@ -7,6 +7,7 @@ export type GymTheme = {
   accent: string;
   danger: string;
   border: string;
+  isDark: boolean;
 };
 
 export const defaultTheme: GymTheme = {
@@ -18,6 +19,19 @@ export const defaultTheme: GymTheme = {
   accent: "#6366F1",
   danger: "#EF4444",
   border: "#334155",
+  isDark: true,
+};
+
+export const lightTheme: GymTheme = {
+  background: "#F1F5F9",
+  panel: "#FFFFFF",
+  panelSoft: "#F8FAFC",
+  text: "#0F172A",
+  muted: "#64748B",
+  accent: "#6366F1",
+  danger: "#EF4444",
+  border: "#E2E8F0",
+  isDark: false,
 };
 
 export const gymThemes: Record<string, GymTheme> = {

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Switch } from "react-native";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
@@ -9,10 +9,11 @@ import { useAttendance } from "../../hooks/useAttendance";
 import { useAuth } from "../../hooks/useAuth";
 import { useSlots } from "../../hooks/useSlots";
 import { RootStackParamList } from "../../navigation/types";
-import { useGymTheme } from "../../contexts/ThemeContext";
+import { useGymTheme, useThemeToggle } from "../../contexts/ThemeContext";
 
 export function ProfileScreen() {
   const theme = useGymTheme();
+  const toggleDark = useThemeToggle();
   const { currentUser } = useAuth();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { attendance } = useAttendance();
@@ -60,6 +61,23 @@ export function ProfileScreen() {
         </View>
         <AppButton title="View Attendance History" onPress={() => navigation.navigate("AttendanceHistory")} variant="secondary" />
       </Card>
+
+      <Card title="Appearance" subtitle="Customize your experience">
+        <View style={styles.settingRow}>
+          <View>
+            <Text style={[styles.settingLabel, { color: theme.text }]}>Dark Mode</Text>
+            <Text style={[styles.settingDesc, { color: theme.muted }]}>
+              {theme.isDark ? "Currently dark" : "Currently light"}
+            </Text>
+          </View>
+          <Switch
+            value={theme.isDark}
+            onValueChange={toggleDark}
+            trackColor={{ false: theme.border, true: theme.accent }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
+      </Card>
     </ScreenShell>
   );
 }
@@ -78,4 +96,7 @@ const styles = StyleSheet.create({
   planRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   planName: { fontSize: 15, fontWeight: "700" },
   planRenew: { fontSize: 12, marginTop: 2 },
+  settingRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  settingLabel: { fontSize: 15, fontWeight: "600" },
+  settingDesc: { fontSize: 12, marginTop: 2 },
 });

@@ -16,6 +16,15 @@ export type GymProfile = {
 export type Trainer = { id: string; name: string };
 export type Member = { id: string; name: string };
 
+export type Workout = {
+  id: string;
+  name: string;
+  duration: string;
+  intensity: "Low" | "Medium" | "High";
+  exercises: number;
+  category: string;
+};
+
 export type TimeSlot = {
   id: string;
   date: string;

@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet, Text } from "react-native";
-import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { CompositeNavigationProp, NavigationProp, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Card } from "../../components/Card";
 import { MetricGrid } from "../../components/MetricGrid";
 import { ScreenShell } from "../../components/ScreenShell";
@@ -11,12 +12,17 @@ import { useAttendance } from "../../hooks/useAttendance";
 import { useRoster } from "../../hooks/useRoster";
 import { useSlots } from "../../hooks/useSlots";
 import { useGymTheme } from "../../contexts/ThemeContext";
-import { OwnerTabParamList } from "../../navigation/types";
+import { OwnerTabParamList, RootStackParamList } from "../../navigation/types";
 import { TODAY } from "../../services/store";
+
+type OwnerNavProp = CompositeNavigationProp<
+  NavigationProp<OwnerTabParamList>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export function OwnerDashboardScreen() {
   const theme = useGymTheme();
-  const navigation = useNavigation<NavigationProp<OwnerTabParamList>>();
+  const navigation = useNavigation<OwnerNavProp>();
   const { trainers, members, loading: rosterLoading, error: rosterError, refresh: refreshRoster } = useRoster();
   const { slots, loading: slotsLoading, error: slotsError, refresh: refreshSlots } = useSlots();
   const { attendance, loading: attendanceLoading, error: attendanceError, refresh: refreshAttendance } = useAttendance();
@@ -30,10 +36,27 @@ export function OwnerDashboardScreen() {
 
       <MetricGrid
         metrics={[
-          { label: "Members", value: String(members.length), accent: true },
-          { label: "Trainers", value: String(trainers.length) },
-          { label: "Today", value: String(todayAttendance) },
-          { label: "Slots", value: String(slots.length) },
+          {
+            label: "Members",
+            value: String(members.length),
+            accent: true,
+            onPress: () => navigation.navigate("Members"),
+          },
+          {
+            label: "Trainers",
+            value: String(trainers.length),
+            onPress: () => navigation.navigate("Trainers"),
+          },
+          {
+            label: "Today",
+            value: String(todayAttendance),
+            onPress: () => navigation.navigate("Attendance"),
+          },
+          {
+            label: "Slots",
+            value: String(slots.length),
+            onPress: () => navigation.navigate("Slots"),
+          },
         ]}
       />
 
