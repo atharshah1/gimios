@@ -21,12 +21,21 @@ export function ScheduleScreen() {
     await markAttendance({ date, slot: slotLabel, memberId, memberName, status: next });
   };
 
+  // Pre-compute attendance lookup map for O(1) per-slot lookups
+  const attendedMemberSlots = React.useMemo(() => {
+    const map = new Map<string, boolean>();
+    for (const a of attendance) {
+      map.set(`${a.memberId}:${a.slot.split(" - ")[0]}`, true);
+    }
+    return map;
+  }, [attendance]);
+
   return (
     <ScreenShell title="Schedule" onRefresh={async () => { await Promise.all([refreshSlots(), refreshAttendance()]); }}>
       {slotsLoading ? <SkeletonGroup rows={4} /> : null}
       {(slotsError || attendanceError) ? <StateView title="Error" description={slotsError || attendanceError || "Unknown error"} /> : null}
       {slots.map((slot) => {
-        const status = localStatus[slot.id] ?? (attendance.find((a) => a.memberId === slot.memberId && a.slot.startsWith(slot.time)) ? "present" : "absent");
+        const status = localStatus[slot.id] ?? (attendedMemberSlots.has(`${slot.memberId}:${slot.time}`) ? "present" : "absent");
         const isPresent = status === "present";
         return (
           <Card key={slot.id} title={slot.time} subtitle={`${slot.date} · ${slot.trainerName}`}>
