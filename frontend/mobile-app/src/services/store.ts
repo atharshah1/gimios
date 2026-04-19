@@ -42,14 +42,14 @@ export const db: {
   ],
   attendance: [
     // Today's check-ins (drives "Today" metric on Owner Dashboard)
-    { id: "att-1", date: TODAY, slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
-    { id: "att-2", date: TODAY, slot: "09:00 - Alex Morgan", status: "present", memberId: "member-3", memberName: "James Carter" },
+    { id: "att-1", date: TODAY, time: "09:00", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
+    { id: "att-2", date: TODAY, time: "09:00", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-3", memberName: "James Carter" },
     // Past week history for member-1 (powers Member Attendance History timeline)
-    { id: "att-3", date: "2026-04-12", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
-    { id: "att-4", date: "2026-04-13", slot: "09:00 - Alex Morgan", status: "absent", memberId: "member-1", memberName: "Mike Ryan" },
-    { id: "att-5", date: "2026-04-14", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
-    { id: "att-6", date: "2026-04-15", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
-    { id: "att-7", date: "2026-04-16", slot: "09:00 - Alex Morgan", status: "absent", memberId: "member-1", memberName: "Mike Ryan" },
-    { id: "att-8", date: "2026-04-17", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
+    { id: "att-3", date: "2026-04-12", time: "09:00", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
+    { id: "att-4", date: "2026-04-13", time: "09:00", slot: "09:00 - Alex Morgan", status: "absent", memberId: "member-1", memberName: "Mike Ryan" },
+    { id: "att-5", date: "2026-04-14", time: "09:00", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
+    { id: "att-6", date: "2026-04-15", time: "09:00", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
+    { id: "att-7", date: "2026-04-16", time: "09:00", slot: "09:00 - Alex Morgan", status: "absent", memberId: "member-1", memberName: "Mike Ryan" },
+    { id: "att-8", date: "2026-04-17", time: "09:00", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
   ],
 };

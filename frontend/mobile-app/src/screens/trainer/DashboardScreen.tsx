@@ -7,15 +7,17 @@ import { MetricGrid } from "../../components/MetricGrid";
 import { ScreenShell } from "../../components/ScreenShell";
 import { AppButton } from "../../components/AppButton";
 import { useSlots } from "../../hooks/useSlots";
+import { useAuth } from "../../hooks/useAuth";
 import { useGymTheme } from "../../contexts/ThemeContext";
 import { TODAY } from "../../services/store";
 
 export function DashboardScreen() {
   const theme = useGymTheme();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { currentUser } = useAuth();
   const { slots } = useSlots();
   const mySlots = slots
-    .filter((s) => s.trainerId === "trainer-1")
+    .filter((s) => s.trainerId === (currentUser?.id ?? "trainer-1"))
     .sort((a, b) => a.date !== b.date ? a.date.localeCompare(b.date) : a.time.localeCompare(b.time));
 
   const todaySlots = mySlots.filter(s => s.date === TODAY);

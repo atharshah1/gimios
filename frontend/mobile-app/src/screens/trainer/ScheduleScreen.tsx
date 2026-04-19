@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, View, Text, StyleSheet, Pressable } from "react-native";
 import { ScreenShell } from "../../components/ScreenShell";
 import { StateView } from "../../components/StateView";
 import { SkeletonGroup } from "../../components/SkeletonGroup";
@@ -33,6 +33,33 @@ function groupBySession(slots: TimeSlot[]): SessionGroup[] {
   return Array.from(map.values());
 }
 
+function FadeSlideIn({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(anim, { toValue: 1, duration: 350, delay, useNativeDriver: true }).start();
+  }, [anim, delay]);
+  return (
+    <Animated.View style={{
+      opacity: anim,
+      transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+    }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+function SavedBadge({ textColor, bgColor }: { textColor: string; bgColor: string }) {
+  const scale = useRef(new Animated.Value(0.7)).current;
+  useEffect(() => {
+    Animated.spring(scale, { toValue: 1, tension: 200, friction: 10, useNativeDriver: true }).start();
+  }, [scale]);
+  return (
+    <Animated.View style={[styles.savedBadge, { backgroundColor: bgColor, transform: [{ scale }] }]}>
+      <Text style={[styles.savedText, { color: textColor }]}>Saved ✓</Text>
+    </Animated.View>
+  );
+}
+
 export function ScheduleScreen() {
   const theme = useGymTheme();
   const { slots, loading: slotsLoading, error: slotsError, refresh: refreshSlots } = useSlots();
@@ -49,20 +76,28 @@ export function ScheduleScreen() {
     return () => clearTimeout(t);
   }, [savedKey]);
 
+  // Use a.time directly — no fragile string splitting
   const attendedSet = React.useMemo(() => {
     const s = new Set<string>();
     for (const a of attendance) {
-      s.add(`${a.memberId}:${a.date}:${a.slot.split(" - ")[0]}`);
+      s.add(`${a.memberId}:${a.date}:${a.time}`);
     }
     return s;
   }, [attendance]);
 
-  const toggle = async (slotId: string, memberId: string, memberName: string, date: string, slotLabel: string) => {
-    const current = localStatus[slotId] ?? (attendedSet.has(`${memberId}:${date}:${slotLabel.split(" - ")[0]}`) ? "present" : "absent");
+  const toggle = async (
+    slotId: string,
+    memberId: string,
+    memberName: string,
+    date: string,
+    time: string,
+    trainerName: string,
+  ) => {
+    const current = localStatus[slotId] ?? (attendedSet.has(`${memberId}:${date}:${time}`) ? "present" : "absent");
     const next: "present" | "absent" = current === "absent" ? "present" : "absent";
     setLocalStatus((prev) => ({ ...prev, [slotId]: next }));
     setSavedKey(slotId);
-    await markAttendance({ date, slot: slotLabel, memberId, memberName, status: next });
+    await markAttendance({ date, time, slot: `${time} - ${trainerName}`, memberId, memberName, status: next });
   };
 
   const sessions = groupBySession(slots);
@@ -78,66 +113,66 @@ export function ScheduleScreen() {
     }).length;
 
     return (
-      <View key={session.key} style={[styles.sessionCard, { backgroundColor: theme.panel, borderColor: isToday ? theme.accent : theme.border }]}>
-        {/* Session header */}
-        <View style={styles.sessionHeader}>
-          <View style={[styles.timeBadge, { backgroundColor: isToday ? theme.accent : `${theme.accent}22` }]}>
-            <Text style={[styles.timeText, { color: isToday ? "#FFFFFF" : theme.accent }]}>{session.time}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.sessionTitle, { color: theme.text }]}>
-              {isToday ? "Today" : session.date} · Session {index + 1}
-            </Text>
-            <Text style={[styles.sessionSub, { color: theme.muted }]}>
-              {session.trainerName} · {totalMembers} {totalMembers === 1 ? "member" : "members"}
-            </Text>
-          </View>
-          <View style={[styles.progressPill, { backgroundColor: presentCount === totalMembers ? "#16A34A22" : `${theme.accent}15` }]}>
-            <Text style={[styles.progressText, { color: presentCount === totalMembers ? "#4ADE80" : theme.accent }]}>
-              {presentCount}/{totalMembers}
-            </Text>
-          </View>
-        </View>
-
-        {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: theme.border }]} />
-
-        {/* Member rows */}
-        {session.members.map((m) => {
-          const status = localStatus[m.slotId] ?? (attendedSet.has(`${m.memberId}:${session.date}:${session.time}`) ? "present" : "absent");
-          const isPresent = status === "present";
-          const justSaved = savedKey === m.slotId;
-          return (
-            <View key={m.slotId} style={styles.memberRow}>
-              <View style={[styles.avatar, { backgroundColor: `${theme.accent}22` }]}>
-                <Text style={[styles.avatarText, { color: theme.accent }]}>{m.memberName.charAt(0)}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.memberName, { color: theme.text }]}>{m.memberName}</Text>
-                <Text style={[styles.memberSub, { color: theme.muted }]}>Member</Text>
-              </View>
-              {justSaved ? (
-                <View style={[styles.savedBadge, { backgroundColor: "#16A34A22" }]}>
-                  <Text style={[styles.savedText, { color: "#4ADE80" }]}>Saved ✓</Text>
-                </View>
-              ) : (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.toggleBtn,
-                    { backgroundColor: isPresent ? "#16A34A22" : `${theme.danger}18` },
-                    pressed && { opacity: 0.7 },
-                  ]}
-                  onPress={() => toggle(m.slotId, m.memberId, m.memberName, session.date, `${session.time} - ${session.trainerName}`)}
-                >
-                  <Text style={[styles.toggleText, { color: isPresent ? "#4ADE80" : theme.danger }]}>
-                    {isPresent ? "✓ Present" : "✗ Absent"}
-                  </Text>
-                </Pressable>
-              )}
+      <FadeSlideIn key={session.key} delay={index * 80}>
+        <View style={[styles.sessionCard, { backgroundColor: theme.panel, borderColor: isToday ? theme.accent : theme.border }]}>
+          {/* Session header */}
+          <View style={styles.sessionHeader}>
+            <View style={[styles.timeBadge, { backgroundColor: isToday ? theme.accent : `${theme.accent}22` }]}>
+              <Text style={[styles.timeText, { color: isToday ? "#FFFFFF" : theme.accent }]}>{session.time}</Text>
             </View>
-          );
-        })}
-      </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.sessionTitle, { color: theme.text }]}>
+                {isToday ? "Today" : session.date} · Session {index + 1}
+              </Text>
+              <Text style={[styles.sessionSub, { color: theme.muted }]}>
+                {session.trainerName} · {totalMembers} {totalMembers === 1 ? "member" : "members"}
+              </Text>
+            </View>
+            <View style={[styles.progressPill, { backgroundColor: presentCount === totalMembers ? "#16A34A22" : `${theme.accent}15` }]}>
+              <Text style={[styles.progressText, { color: presentCount === totalMembers ? "#4ADE80" : theme.accent }]}>
+                {presentCount}/{totalMembers}
+              </Text>
+            </View>
+          </View>
+
+          {/* Divider */}
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+          {/* Member rows */}
+          {session.members.map((m) => {
+            const status = localStatus[m.slotId] ?? (attendedSet.has(`${m.memberId}:${session.date}:${session.time}`) ? "present" : "absent");
+            const isPresent = status === "present";
+            const justSaved = savedKey === m.slotId;
+            return (
+              <View key={m.slotId} style={styles.memberRow}>
+                <View style={[styles.avatar, { backgroundColor: `${theme.accent}22` }]}>
+                  <Text style={[styles.avatarText, { color: theme.accent }]}>{m.memberName.charAt(0)}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.memberName, { color: theme.text }]}>{m.memberName}</Text>
+                  <Text style={[styles.memberSub, { color: theme.muted }]}>Member</Text>
+                </View>
+                {justSaved ? (
+                  <SavedBadge textColor="#4ADE80" bgColor="#16A34A22" />
+                ) : (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.toggleBtn,
+                      { backgroundColor: isPresent ? "#16A34A22" : `${theme.danger}18` },
+                      pressed && { opacity: 0.7 },
+                    ]}
+                    onPress={() => toggle(m.slotId, m.memberId, m.memberName, session.date, session.time, session.trainerName)}
+                  >
+                    <Text style={[styles.toggleText, { color: isPresent ? "#4ADE80" : theme.danger }]}>
+                      {isPresent ? "✓ Present" : "✗ Absent"}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      </FadeSlideIn>
     );
   };
 
