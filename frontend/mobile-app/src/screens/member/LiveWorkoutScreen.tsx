@@ -61,7 +61,10 @@ export function LiveWorkoutScreen() {
   const [running, setRunning] = useState(true);
   const [currentEx, setCurrentEx] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  // Keep intervalRef stable so the running toggle doesn't create stale closures
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const runningRef = useRef(running);
+  runningRef.current = running;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -74,13 +77,14 @@ export function LiveWorkoutScreen() {
   }, [pulseAnim]);
 
   useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    }
+    // Single long-lived interval; uses the ref so toggling pause/resume
+    // doesn't restart the interval and avoids stale-closure drift.
+    intervalRef.current = setInterval(() => {
+      if (runningRef.current) setElapsed((e) => e + 1);
+    }, 1000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [running]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totalExercises = workout?.exercises ?? 5;
 

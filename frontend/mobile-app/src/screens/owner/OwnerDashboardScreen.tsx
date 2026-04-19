@@ -39,12 +39,14 @@ export function OwnerDashboardScreen() {
   const todayPresent = todayPresentIds.size;
   const todaySlotsUnique = new Set(todaySlots.map(s => s.memberId)).size;
 
-  // Members with no slot in the last 7 days (potential churn)
+  // Members with no attended session in the last 7 days (real inactivity, not just unscheduled)
   const sevenDaysAgo = new Date(TODAY + "T00:00:00");
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
   const recentActiveIds = new Set(
-    slots.filter(s => s.date >= sevenDaysAgoStr).map(s => s.memberId)
+    attendance
+      .filter(r => r.date >= sevenDaysAgoStr && r.status === "present")
+      .map(r => r.memberId)
   );
   const inactiveMembers = members.filter(m => !recentActiveIds.has(m.id));
 

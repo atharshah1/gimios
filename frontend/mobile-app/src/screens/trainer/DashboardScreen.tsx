@@ -26,12 +26,17 @@ export function DashboardScreen() {
     .sort((a, b) => a.date !== b.date ? a.date.localeCompare(b.date) : a.time.localeCompare(b.time));
 
   const todaySlots = mySlots.filter(s => s.date === TODAY);
-  const uniqueSessionTimes = [...new Set(todaySlots.map(s => s.time))];
+  // Sort times ascending and filter to only those at-or-after the current time
+  const nowTime = new Date().toTimeString().slice(0, 5); // "HH:mm"
+  const uniqueSessionTimes = [...new Set(todaySlots.map(s => s.time))].sort();
+  const upcomingTimes = uniqueSessionTimes.filter(t => t >= nowTime);
+  const pastTimes = uniqueSessionTimes.filter(t => t < nowTime);
   const uniqueClients = new Set(mySlots.map(s => s.memberId)).size;
 
-  // Next upcoming session (earliest time slot today, or first future slot)
-  const nextTime = uniqueSessionTimes[0];
+  // Hero shows the next upcoming session; if all are past, show the most recent past one
+  const nextTime = upcomingTimes[0] ?? pastTimes[pastTimes.length - 1];
   const nextSessionSlots = nextTime ? todaySlots.filter(s => s.time === nextTime) : [];
+  const isUpcoming = upcomingTimes.length > 0;
 
   const goToSession = (time: string) => {
     const sessionKey = `${TODAY}|${time}|${currentUser?.id ?? "trainer-1"}`;
@@ -48,7 +53,7 @@ export function DashboardScreen() {
         >
           <View style={styles.heroTop}>
             <View>
-              <Text style={styles.heroLabel}>NEXT UP</Text>
+              <Text style={styles.heroLabel}>{isUpcoming ? "NEXT UP" : "LAST SESSION"}</Text>
               <Text style={styles.heroTime}>{nextTime}</Text>
             </View>
             <View style={styles.heroPill}>
@@ -59,7 +64,7 @@ export function DashboardScreen() {
             {nextSessionSlots.map(s => s.memberName).join(" · ")}
           </Text>
           <View style={styles.heroBtn}>
-            <Text style={styles.heroBtnText}>▶  Start Session</Text>
+            <Text style={styles.heroBtnText}>{isUpcoming ? "▶  Start Session" : "✓  View Attendance"}</Text>
           </View>
         </Pressable>
       ) : (
@@ -98,10 +103,10 @@ export function DashboardScreen() {
       />
 
       {/* ── Rest of today's sessions ── */}
-      {uniqueSessionTimes.length > 1 ? (
+      {upcomingTimes.length > 1 ? (
         <View style={[styles.listCard, { backgroundColor: theme.panel, borderColor: theme.border }]}>
           <Text style={[styles.listTitle, { color: theme.text }]}>Today's Sessions</Text>
-          {uniqueSessionTimes.slice(1).map((time) => {
+          {upcomingTimes.slice(1).map((time) => {
             const sessionSlots = todaySlots.filter(s => s.time === time);
             const key = `${TODAY}|${time}|${currentUser?.id ?? "trainer-1"}`;
             return (

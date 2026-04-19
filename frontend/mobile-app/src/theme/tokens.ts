@@ -41,5 +41,6 @@ export const gymThemes: Record<string, GymTheme> = {
     accent: "#22E075",
     panel: "#101514",
     panelSoft: "#18221F",
+    isDark: true,
   },
 };
