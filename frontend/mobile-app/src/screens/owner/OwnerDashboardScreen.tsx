@@ -40,6 +40,7 @@ export function OwnerDashboardScreen() {
   const todaySlotsUnique = new Set(todaySlots.map(s => s.memberId)).size;
 
   // Members with no attended session in the last 7 days (real inactivity, not just unscheduled)
+  // TODAY is always "YYYY-MM-DD" (from store.ts); append time to avoid UTC midnight shifts
   const sevenDaysAgo = new Date(TODAY + "T00:00:00");
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);

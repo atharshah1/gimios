@@ -41,9 +41,9 @@ export function SessionDetailsScreen() {
     return () => clearTimeout(t);
   }, [savedKey]);
 
-  // Parse the session key: date|time|trainerId (pipe separator avoids conflict with time's colon)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [date, time, _trainerId] = sessionKey.split("|");
+  // Parse the session key format: "date|time|trainerId"
+  // Three parts are produced by DashboardScreen; only date+time are needed here.
+  const [date, time] = sessionKey.split("|");
 
   const sessionSlots = slots.filter(
     (s) => s.date === date && s.time === time
