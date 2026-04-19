@@ -33,6 +33,7 @@ export function SessionDetailsScreen() {
 
   const [localStatus, setLocalStatus] = useState<Record<string, "present" | "absent">>({});
   const [savedKey, setSavedKey] = useState<string | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
 
   useEffect(() => {
     if (savedKey === null) return;
@@ -58,9 +59,18 @@ export function SessionDetailsScreen() {
   const toggle = async (slotId: string, memberId: string, memberName: string, trainerName: string) => {
     const current = localStatus[slotId] ?? (attendedSet.has(`${memberId}:${date}:${time}`) ? "present" : "absent");
     const next: "present" | "absent" = current === "absent" ? "present" : "absent";
+    // Optimistic update
     setLocalStatus((prev) => ({ ...prev, [slotId]: next }));
     setSavedKey(slotId);
-    await markAttendance({ date, time, slot: `${time} - ${trainerName}`, memberId, memberName, status: next });
+    setToggleError(null);
+    try {
+      await markAttendance({ date, time, slot: `${time} - ${trainerName}`, memberId, memberName, status: next });
+    } catch {
+      // Roll back on failure
+      setLocalStatus((prev) => ({ ...prev, [slotId]: current }));
+      setSavedKey(null);
+      setToggleError("Failed to save attendance. Please try again.");
+    }
   };
 
   const trainerName = sessionSlots[0]?.trainerName ?? "Trainer";
@@ -129,6 +139,12 @@ export function SessionDetailsScreen() {
         })}
       </Card>
 
+      {toggleError ? (
+        <View style={[styles.errorBanner, { backgroundColor: `${theme.danger}18`, borderColor: theme.danger }]}>
+          <Text style={[styles.errorText, { color: theme.danger }]}>⚠ {toggleError}</Text>
+        </View>
+      ) : null}
+
       {presentCount === sessionSlots.length && sessionSlots.length > 0 ? (
         <View style={[styles.completeBanner, { backgroundColor: "#16A34A22", borderColor: "#4ADE80" }]}>
           <Text style={[styles.completeText, { color: "#4ADE80" }]}>✓ All members marked present</Text>
@@ -157,4 +173,6 @@ const styles = StyleSheet.create({
   savedText: { fontSize: 13, fontWeight: "700" },
   completeBanner: { borderRadius: 12, borderWidth: 1, padding: 14, alignItems: "center" },
   completeText: { fontSize: 14, fontWeight: "700" },
+  errorBanner: { borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 8 },
+  errorText: { fontSize: 13, fontWeight: "600" },
 });

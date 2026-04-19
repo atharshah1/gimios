@@ -12,16 +12,12 @@ export type TrainerTabParamList = {
   Dashboard: undefined;
   Schedule: undefined;
   Clients: undefined;
-  Billing: undefined;
   Profile: undefined;
 };
 
 export type MemberTabParamList = {
   Home: undefined;
   Workouts: undefined;
-  Nutrition: undefined;
-  Community: undefined;
-  Membership: undefined;
   Profile: undefined;
 };
 

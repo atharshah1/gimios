@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet, Switch } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Switch, Pressable } from "react-native";
 import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
 import { AppButton } from "../../components/AppButton";
@@ -15,13 +15,21 @@ export function TrainerProfileScreen() {
   const { currentUser } = useAuth();
   const { devSwitchRole } = useRole();
   const { slots } = useSlots();
+  // Long-press counter: 5 taps reveals dev panel
+  const [devTaps, setDevTaps] = useState(0);
+  const devUnlocked = devTaps >= 5;
 
   const mySlots = slots.filter((s) => s.trainerId === (currentUser?.id ?? "trainer-1"));
   const uniqueClients = new Set(mySlots.map((s) => s.memberId)).size;
 
   return (
     <ScreenShell title="Profile">
-      <View style={[styles.header, { backgroundColor: theme.panel, borderColor: theme.border }]}>
+      {/* Avatar — long-press (5×) to reveal dev panel */}
+      <Pressable
+        onLongPress={() => setDevTaps((n) => n + 1)}
+        delayLongPress={400}
+        style={[styles.header, { backgroundColor: theme.panel, borderColor: theme.border }]}
+      >
         <View style={[styles.avatar, { backgroundColor: `${theme.accent}22` }]}>
           <Text style={[styles.avatarText, { color: theme.accent }]}>
             {(currentUser?.fullName ?? "T").charAt(0)}
@@ -30,7 +38,10 @@ export function TrainerProfileScreen() {
         <Text style={[styles.name, { color: theme.text }]}>{currentUser?.fullName ?? "Trainer"}</Text>
         <Text style={[styles.subtitle, { color: theme.muted }]}>Personal Trainer · Apex Athletics</Text>
         <PillBadge label="Pro Trainer" type="success" />
-      </View>
+        {devTaps > 0 && !devUnlocked ? (
+          <Text style={[styles.devHint, { color: theme.muted }]}>{5 - devTaps} more to unlock dev mode</Text>
+        ) : null}
+      </Pressable>
 
       <Card title="Activity" subtitle="Your training overview">
         <View style={styles.statsRow}>
@@ -83,10 +94,14 @@ export function TrainerProfileScreen() {
         </View>
       </Card>
 
-      <Card title="Dev Tools" subtitle="Switch role for demo">
-        <AppButton title="View as Member" variant="secondary" onPress={() => devSwitchRole("member")} />
-        <AppButton title="View as Owner" variant="secondary" onPress={() => devSwitchRole("gym_owner")} />
-      </Card>
+      {/* Hidden dev panel — only visible after 5 long-presses on the avatar */}
+      {devUnlocked ? (
+        <Card title="⚙ Dev Mode" subtitle="Role switcher — not visible in production">
+          <AppButton title="Switch to Member" variant="secondary" onPress={() => devSwitchRole("member")} />
+          <AppButton title="Switch to Owner" variant="secondary" onPress={() => devSwitchRole("gym_owner")} />
+          <AppButton title="Lock Dev Mode" variant="danger" compact onPress={() => setDevTaps(0)} />
+        </Card>
+      ) : null}
     </ScreenShell>
   );
 }
@@ -97,6 +112,7 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 28, fontWeight: "800" },
   name: { fontSize: 20, fontWeight: "800" },
   subtitle: { fontSize: 13 },
+  devHint: { fontSize: 11, marginTop: 4 },
   statsRow: { flexDirection: "row", justifyContent: "space-around", alignItems: "center" },
   stat: { alignItems: "center", flex: 1 },
   statValue: { fontSize: 22, fontWeight: "800" },

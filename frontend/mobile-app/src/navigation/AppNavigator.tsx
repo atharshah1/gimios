@@ -5,11 +5,8 @@ import { useRole } from "../contexts/RoleContext";
 import { useGymTheme } from "../contexts/ThemeContext";
 import { ErrorScreen } from "../screens/common/ErrorScreen";
 import { LoadingScreen } from "../screens/common/LoadingScreen";
-import { CommunityScreen } from "../screens/member/CommunityScreen";
 import { HomeScreen } from "../screens/member/HomeScreen";
 import { LiveWorkoutScreen } from "../screens/member/LiveWorkoutScreen";
-import { MembershipScreen } from "../screens/member/MembershipScreen";
-import { NutritionScreen } from "../screens/member/NutritionScreen";
 import { ProfileScreen } from "../screens/member/ProfileScreen";
 import { WorkoutDetailScreen } from "../screens/member/WorkoutDetailScreen";
 import { WorkoutsScreen } from "../screens/member/WorkoutsScreen";
@@ -21,7 +18,6 @@ import { OwnerMembersScreen } from "../screens/owner/OwnerMembersScreen";
 import { OwnerSetupScreen } from "../screens/owner/OwnerSetupScreen";
 import { OwnerSlotsScreen } from "../screens/owner/OwnerSlotsScreen";
 import { OwnerTrainersScreen } from "../screens/owner/OwnerTrainersScreen";
-import { BillingScreen } from "../screens/trainer/BillingScreen";
 import { ClientProfileScreen } from "../screens/trainer/ClientProfileScreen";
 import { ClientsScreen } from "../screens/trainer/ClientsScreen";
 import { DashboardScreen } from "../screens/trainer/DashboardScreen";
@@ -56,7 +52,6 @@ function TrainerTabNavigator() {
       <TrainerTabs.Screen name="Dashboard" component={DashboardScreen} />
       <TrainerTabs.Screen name="Schedule" component={ScheduleScreen} />
       <TrainerTabs.Screen name="Clients" component={ClientsScreen} />
-      <TrainerTabs.Screen name="Billing" component={BillingScreen} />
       <TrainerTabs.Screen name="Profile" component={TrainerProfileScreen} />
     </TrainerTabs.Navigator>
   );
@@ -67,9 +62,6 @@ function MemberTabNavigator() {
     <MemberTabs.Navigator>
       <MemberTabs.Screen name="Home" component={HomeScreen} />
       <MemberTabs.Screen name="Workouts" component={WorkoutsScreen} />
-      <MemberTabs.Screen name="Nutrition" component={NutritionScreen} />
-      <MemberTabs.Screen name="Community" component={CommunityScreen} />
-      <MemberTabs.Screen name="Membership" component={MembershipScreen} />
       <MemberTabs.Screen name="Profile" component={ProfileScreen} />
     </MemberTabs.Navigator>
   );
