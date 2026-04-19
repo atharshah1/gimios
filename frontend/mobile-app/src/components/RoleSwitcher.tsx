@@ -14,28 +14,30 @@ export function RoleSwitcher() {
   const theme = useGymTheme();
   const { role, isDemoMode, devSwitchRole } = useRole();
   if (!isDemoMode) return null;
+
   return (
-    <View style={[styles.bar, { backgroundColor: theme.panel, borderColor: theme.border }]}>
-      <Text style={[styles.label, { color: theme.muted }]}>DEMO</Text>
-      <View style={styles.pills}>
-        {ROLES.map((r) => (
-          <Pressable
-            key={r.value}
-            style={[styles.pill, { backgroundColor: role === r.value ? theme.accent : theme.panelSoft }]}
-            onPress={() => devSwitchRole(r.value)}
-          >
-            <Text style={[styles.pillText, { color: role === r.value ? "#FFF" : theme.muted }]}>{r.label}</Text>
-          </Pressable>
-        ))}
+    <View style={[styles.bar, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
+      <View style={[styles.track, { backgroundColor: theme.panel }]}>
+        {ROLES.map((r) => {
+          const active = role === r.value;
+          return (
+            <Pressable
+              key={r.value}
+              style={[styles.segment, active && { backgroundColor: theme.accent, shadowColor: theme.accent, shadowOpacity: 0.4, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 }]}
+              onPress={() => devSwitchRole(r.value)}
+            >
+              <Text style={[styles.segmentText, { color: active ? "#FFFFFF" : theme.muted }]}>{r.label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, gap: 12 },
-  label: { fontSize: 10, fontWeight: "800", letterSpacing: 1 },
-  pills: { flexDirection: "row", gap: 6 },
-  pill: { borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5 },
-  pillText: { fontSize: 12, fontWeight: "700" },
+  bar: { paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
+  track: { flexDirection: "row", borderRadius: 12, padding: 3 },
+  segment: { flex: 1, borderRadius: 10, paddingVertical: 7, alignItems: "center" },
+  segmentText: { fontSize: 13, fontWeight: "700" },
 });

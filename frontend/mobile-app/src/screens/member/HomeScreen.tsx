@@ -15,7 +15,9 @@ export function HomeScreen() {
   const { currentUser } = useAuth();
   const { slots } = useSlots();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const mySlots = slots.filter((s) => s.memberId === (currentUser?.id ?? "member-1"));
+  const mySlots = slots
+    .filter((s) => s.memberId === (currentUser?.id ?? "member-1"))
+    .sort((a, b) => a.date !== b.date ? a.date.localeCompare(b.date) : a.time.localeCompare(b.time));
   const nextSlot = mySlots[0];
 
   return (

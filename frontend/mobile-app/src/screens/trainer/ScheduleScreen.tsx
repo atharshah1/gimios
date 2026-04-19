@@ -1,77 +1,193 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import { Card } from "../../components/Card";
 import { ScreenShell } from "../../components/ScreenShell";
 import { StateView } from "../../components/StateView";
 import { SkeletonGroup } from "../../components/SkeletonGroup";
 import { useAttendance } from "../../hooks/useAttendance";
 import { useSlots } from "../../hooks/useSlots";
 import { useGymTheme } from "../../contexts/ThemeContext";
+import { TimeSlot } from "../../services/types";
+import { TODAY } from "../../services/store";
+
+type SessionGroup = {
+  key: string;
+  date: string;
+  time: string;
+  trainerId: string;
+  trainerName: string;
+  members: Array<{ slotId: string; memberId: string; memberName: string }>;
+};
+
+function groupBySession(slots: TimeSlot[]): SessionGroup[] {
+  const map = new Map<string, SessionGroup>();
+  const sorted = [...slots].sort((a, b) =>
+    a.date !== b.date ? a.date.localeCompare(b.date) : a.time.localeCompare(b.time)
+  );
+  for (const s of sorted) {
+    const key = `${s.date}:${s.time}:${s.trainerId}`;
+    if (!map.has(key)) {
+      map.set(key, { key, date: s.date, time: s.time, trainerId: s.trainerId, trainerName: s.trainerName, members: [] });
+    }
+    map.get(key)!.members.push({ slotId: s.id, memberId: s.memberId, memberName: s.memberName });
+  }
+  return Array.from(map.values());
+}
 
 export function ScheduleScreen() {
   const theme = useGymTheme();
   const { slots, loading: slotsLoading, error: slotsError, refresh: refreshSlots } = useSlots();
   const { markAttendance, attendance, error: attendanceError, refresh: refreshAttendance } = useAttendance();
+
+  // localStatus: slotId → present|absent
   const [localStatus, setLocalStatus] = useState<Record<string, "present" | "absent">>({});
+  // savedKey: slotId that just got toggled (shows "Saved ✓" briefly)
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (savedKey === null) return;
+    const t = setTimeout(() => setSavedKey(null), 1400);
+    return () => clearTimeout(t);
+  }, [savedKey]);
+
+  const attendedSet = React.useMemo(() => {
+    const s = new Set<string>();
+    for (const a of attendance) {
+      s.add(`${a.memberId}:${a.date}:${a.slot.split(" - ")[0]}`);
+    }
+    return s;
+  }, [attendance]);
 
   const toggle = async (slotId: string, memberId: string, memberName: string, date: string, slotLabel: string) => {
-    const current = localStatus[slotId] ?? "absent";
+    const current = localStatus[slotId] ?? (attendedSet.has(`${memberId}:${date}:${slotLabel.split(" - ")[0]}`) ? "present" : "absent");
     const next: "present" | "absent" = current === "absent" ? "present" : "absent";
     setLocalStatus((prev) => ({ ...prev, [slotId]: next }));
+    setSavedKey(slotId);
     await markAttendance({ date, slot: slotLabel, memberId, memberName, status: next });
   };
 
-  // Pre-compute attendance lookup map for O(1) per-slot lookups
-  const attendedMemberSlots = React.useMemo(() => {
-    const map = new Map<string, boolean>();
-    for (const a of attendance) {
-      map.set(`${a.memberId}:${a.date}:${a.slot.split(" - ")[0]}`, true);
-    }
-    return map;
-  }, [attendance]);
+  const sessions = groupBySession(slots);
+  const todaySessions = sessions.filter(s => s.date === TODAY);
+  const upcomingSessions = sessions.filter(s => s.date > TODAY);
+
+  const renderSession = (session: SessionGroup, index: number) => {
+    const isToday = session.date === TODAY;
+    const totalMembers = session.members.length;
+    const presentCount = session.members.filter(m => {
+      const status = localStatus[m.slotId] ?? (attendedSet.has(`${m.memberId}:${session.date}:${session.time}`) ? "present" : "absent");
+      return status === "present";
+    }).length;
+
+    return (
+      <View key={session.key} style={[styles.sessionCard, { backgroundColor: theme.panel, borderColor: isToday ? theme.accent : theme.border }]}>
+        {/* Session header */}
+        <View style={styles.sessionHeader}>
+          <View style={[styles.timeBadge, { backgroundColor: isToday ? theme.accent : `${theme.accent}22` }]}>
+            <Text style={[styles.timeText, { color: isToday ? "#FFFFFF" : theme.accent }]}>{session.time}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.sessionTitle, { color: theme.text }]}>
+              {isToday ? "Today" : session.date} · Session {index + 1}
+            </Text>
+            <Text style={[styles.sessionSub, { color: theme.muted }]}>
+              {session.trainerName} · {totalMembers} {totalMembers === 1 ? "member" : "members"}
+            </Text>
+          </View>
+          <View style={[styles.progressPill, { backgroundColor: presentCount === totalMembers ? "#16A34A22" : `${theme.accent}15` }]}>
+            <Text style={[styles.progressText, { color: presentCount === totalMembers ? "#4ADE80" : theme.accent }]}>
+              {presentCount}/{totalMembers}
+            </Text>
+          </View>
+        </View>
+
+        {/* Divider */}
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+        {/* Member rows */}
+        {session.members.map((m) => {
+          const status = localStatus[m.slotId] ?? (attendedSet.has(`${m.memberId}:${session.date}:${session.time}`) ? "present" : "absent");
+          const isPresent = status === "present";
+          const justSaved = savedKey === m.slotId;
+          return (
+            <View key={m.slotId} style={styles.memberRow}>
+              <View style={[styles.avatar, { backgroundColor: `${theme.accent}22` }]}>
+                <Text style={[styles.avatarText, { color: theme.accent }]}>{m.memberName.charAt(0)}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.memberName, { color: theme.text }]}>{m.memberName}</Text>
+                <Text style={[styles.memberSub, { color: theme.muted }]}>Member</Text>
+              </View>
+              {justSaved ? (
+                <View style={[styles.savedBadge, { backgroundColor: "#16A34A22" }]}>
+                  <Text style={[styles.savedText, { color: "#4ADE80" }]}>Saved ✓</Text>
+                </View>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.toggleBtn,
+                    { backgroundColor: isPresent ? "#16A34A22" : `${theme.danger}18` },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                  onPress={() => toggle(m.slotId, m.memberId, m.memberName, session.date, `${session.time} - ${session.trainerName}`)}
+                >
+                  <Text style={[styles.toggleText, { color: isPresent ? "#4ADE80" : theme.danger }]}>
+                    {isPresent ? "✓ Present" : "✗ Absent"}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
 
   return (
     <ScreenShell title="Schedule" onRefresh={async () => { await Promise.all([refreshSlots(), refreshAttendance()]); }}>
       {slotsLoading ? <SkeletonGroup rows={4} /> : null}
       {(slotsError || attendanceError) ? <StateView title="Error" description={slotsError || attendanceError || "Unknown error"} /> : null}
-      {slots.map((slot) => {
-        const status = localStatus[slot.id] ?? (attendedMemberSlots.has(`${slot.memberId}:${slot.date}:${slot.time}`) ? "present" : "absent");
-        const isPresent = status === "present";
-        return (
-          <Card key={slot.id} title={slot.time} subtitle={`${slot.date} · ${slot.trainerName}`}>
-            <View style={styles.memberRow}>
-              <View style={[styles.avatar, { backgroundColor: `${theme.accent}22` }]}>
-                <Text style={[styles.avatarText, { color: theme.accent }]}>{slot.memberName.charAt(0)}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.memberName, { color: theme.text }]}>{slot.memberName}</Text>
-                <Text style={[styles.sub, { color: theme.muted }]}>Assigned Member</Text>
-              </View>
-              <Pressable
-                style={[styles.toggleBtn, { backgroundColor: isPresent ? "#16A34A22" : `${theme.danger}22` }]}
-                onPress={() => toggle(slot.id, slot.memberId, slot.memberName, slot.date, `${slot.time} - ${slot.trainerName}`)}
-              >
-                <Text style={[styles.toggleText, { color: isPresent ? "#4ADE80" : theme.danger }]}>
-                  {isPresent ? "✓ Present" : "✗ Absent"}
-                </Text>
-              </Pressable>
-            </View>
-          </Card>
-        );
-      })}
-      {!slotsLoading && slots.length === 0 ? (
-        <StateView title="No slots scheduled" description="The owner hasn't created any slots yet." />
+
+      {!slotsLoading && sessions.length === 0 ? (
+        <StateView
+          title="No sessions yet"
+          description="The gym owner hasn't created any slots. Check back soon."
+        />
+      ) : null}
+
+      {todaySessions.length > 0 ? (
+        <>
+          <Text style={[styles.sectionLabel, { color: theme.muted }]}>TODAY — {TODAY}</Text>
+          {todaySessions.map((s, i) => renderSession(s, i))}
+        </>
+      ) : null}
+
+      {upcomingSessions.length > 0 ? (
+        <>
+          <Text style={[styles.sectionLabel, { color: theme.muted, marginTop: todaySessions.length > 0 ? 16 : 0 }]}>UPCOMING</Text>
+          {upcomingSessions.map((s, i) => renderSession(s, i))}
+        </>
       ) : null}
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  memberRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  sectionLabel: { fontSize: 11, fontWeight: "800", letterSpacing: 1, marginBottom: 8 },
+  sessionCard: { borderRadius: 16, borderWidth: 1, marginBottom: 14, overflow: "hidden" },
+  sessionHeader: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
+  timeBadge: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, alignItems: "center", minWidth: 64 },
+  timeText: { fontSize: 16, fontWeight: "800" },
+  sessionTitle: { fontSize: 14, fontWeight: "700" },
+  sessionSub: { fontSize: 12, marginTop: 2 },
+  progressPill: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+  progressText: { fontSize: 13, fontWeight: "800" },
+  divider: { height: 1, marginHorizontal: 16 },
+  memberRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
   avatar: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
   avatarText: { fontSize: 15, fontWeight: "800" },
   memberName: { fontSize: 14, fontWeight: "600" },
-  sub: { fontSize: 12 },
-  toggleBtn: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 },
+  memberSub: { fontSize: 12, marginTop: 1 },
+  toggleBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   toggleText: { fontSize: 13, fontWeight: "700" },
+  savedBadge: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  savedText: { fontSize: 13, fontWeight: "700" },
 });
