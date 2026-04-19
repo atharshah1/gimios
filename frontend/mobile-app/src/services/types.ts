@@ -29,6 +29,7 @@ export type TimeSlot = {
 export type AttendanceRecord = {
   id: string;
   date: string;
+  time: string;
   slot: string;
   status: "present" | "absent";
   memberId: string;

@@ -10,14 +10,14 @@ export type GymTheme = {
 };
 
 export const defaultTheme: GymTheme = {
-  background: "#050706",
-  panel: "#0E1211",
-  panelSoft: "#151A18",
-  text: "#F6F8F7",
-  muted: "#95A29C",
-  accent: "#8BFF2A",
-  danger: "#FF6E5A",
-  border: "#1E2722",
+  background: "#0F172A",
+  panel: "#1E293B",
+  panelSoft: "#243247",
+  text: "#F8FAFC",
+  muted: "#94A3B8",
+  accent: "#6366F1",
+  danger: "#EF4444",
+  border: "#334155",
 };
 
 export const gymThemes: Record<string, GymTheme> = {

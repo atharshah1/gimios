@@ -9,6 +9,7 @@ type SessionState = {
   currentUser: SessionUser | null;
   loading: boolean;
   error: string | null;
+  isDemoMode: boolean;
   retry: () => void;
   devSwitchRole: (role: AppRole) => Promise<void>;
 };
@@ -19,6 +20,7 @@ const RoleContext = createContext<SessionState>({
   currentUser: null,
   loading: true,
   error: null,
+  isDemoMode: true,
   retry: () => undefined,
   devSwitchRole: async () => undefined,
 });
@@ -68,7 +70,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ role, gymSlug, currentUser, loading, error, retry: load, devSwitchRole }),
+    () => ({ role, gymSlug, currentUser, loading, error, isDemoMode: true, retry: load, devSwitchRole }),
     [currentUser, error, gymSlug, loading, role],
   );
 
