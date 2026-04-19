@@ -21,7 +21,7 @@ type HomeNavProp = CompositeNavigationProp<
 /** Returns the Mon-Sun ISO date strings for the week containing `dateStr`. */
 function getWeekDates(dateStr: string): string[] {
   const d = new Date(dateStr + "T00:00:00");
-  const day = d.getDay();
+  const day = d.getDay(); // 0=Sun, 1=Mon, …
   // Sunday (0) needs -6 to reach Monday; other days need (1 - day)
   const diffToMon = day === 0 ? -6 : 1 - day;
   return Array.from({ length: 7 }, (_, i) => {

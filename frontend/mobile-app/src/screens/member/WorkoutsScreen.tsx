@@ -9,12 +9,6 @@ import { PillBadge } from "../../components/PillBadge";
 import { useGymTheme } from "../../contexts/ThemeContext";
 import { db } from "../../services/store";
 
-const INTENSITY_COLOR: Record<string, string> = {
-  High: "#EF4444",
-  Medium: "#F59E0B",
-  Low: "#22C55E",
-};
-
 export function WorkoutsScreen() {
   const theme = useGymTheme();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();

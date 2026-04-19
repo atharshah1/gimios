@@ -27,7 +27,7 @@ export function TrainerProfileScreen() {
       {/* Avatar — long-press (5×) to reveal dev panel */}
       <Pressable
         onLongPress={() => setDevTaps((n) => n + 1)}
-        delayLongPress={400}
+        delayLongPress={700}
         style={[styles.header, { backgroundColor: theme.panel, borderColor: theme.border }]}
       >
         <View style={[styles.avatar, { backgroundColor: `${theme.accent}22` }]}>
