@@ -25,7 +25,7 @@ export function ScheduleScreen() {
   const attendedMemberSlots = React.useMemo(() => {
     const map = new Map<string, boolean>();
     for (const a of attendance) {
-      map.set(`${a.memberId}:${a.slot.split(" - ")[0]}`, true);
+      map.set(`${a.memberId}:${a.date}:${a.slot.split(" - ")[0]}`, true);
     }
     return map;
   }, [attendance]);
@@ -35,7 +35,7 @@ export function ScheduleScreen() {
       {slotsLoading ? <SkeletonGroup rows={4} /> : null}
       {(slotsError || attendanceError) ? <StateView title="Error" description={slotsError || attendanceError || "Unknown error"} /> : null}
       {slots.map((slot) => {
-        const status = localStatus[slot.id] ?? (attendedMemberSlots.has(`${slot.memberId}:${slot.time}`) ? "present" : "absent");
+        const status = localStatus[slot.id] ?? (attendedMemberSlots.has(`${slot.memberId}:${slot.date}:${slot.time}`) ? "present" : "absent");
         const isPresent = status === "present";
         return (
           <Card key={slot.id} title={slot.time} subtitle={`${slot.date} · ${slot.trainerName}`}>

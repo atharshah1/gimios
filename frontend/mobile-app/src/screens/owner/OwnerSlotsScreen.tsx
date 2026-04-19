@@ -33,6 +33,7 @@ export function OwnerSlotsScreen() {
     }
     setError("");
     await createSlot({ date, time, trainerId: trainerObj.id, trainerName: trainerObj.name, memberId: memberObj.id, memberName: memberObj.name });
+    setDate("2026-04-20");
     setTime("");
     setTrainer("");
     setMember("");

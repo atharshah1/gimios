@@ -42,6 +42,6 @@ export const db: {
     { id: "att-5", date: "2026-04-10", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-1", memberName: "Mike Ryan" },
     { id: "att-6", date: "2026-04-11", slot: "09:00 - Alex Morgan", status: "absent", memberId: "member-1", memberName: "Mike Ryan" },
     { id: "att-7", date: "2026-04-12", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-2", memberName: "Emma Davis" },
-    { id: "att-8", date: new Date().toISOString().slice(0, 10), slot: "09:00 - Alex Morgan", status: "present", memberId: "member-2", memberName: "Emma Davis" },
+    { id: "att-8", date: "2026-04-19", slot: "09:00 - Alex Morgan", status: "present", memberId: "member-2", memberName: "Emma Davis" },
   ],
 };
