@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
 import { Animated, View, Text, StyleSheet, Pressable } from "react-native";
 import { ScreenShell } from "../../components/ScreenShell";
 import { StateView } from "../../components/StateView";
@@ -77,7 +77,7 @@ export function ScheduleScreen() {
   }, [savedKey]);
 
   // Use a.time directly — no fragile string splitting
-  const attendedSet = React.useMemo(() => {
+  const attendedSet = useMemo(() => {
     const s = new Set<string>();
     for (const a of attendance) {
       s.add(`${a.memberId}:${a.date}:${a.time}`);
