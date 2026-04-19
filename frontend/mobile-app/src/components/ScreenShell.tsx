@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text } from "react-native";
 import { useGymTheme } from "../contexts/ThemeContext";
+import { RoleSwitcher } from "./RoleSwitcher";
 
 export function ScreenShell({
   title,
@@ -24,7 +25,8 @@ export function ScreenShell({
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}> 
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+      <RoleSwitcher />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.accent} />}
@@ -38,6 +40,6 @@ export function ScreenShell({
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  content: { padding: 16, paddingBottom: 24 },
-  title: { fontSize: 21, fontWeight: "800", marginBottom: 12 },
+  content: { padding: 16, paddingBottom: 40 },
+  title: { fontSize: 24, fontWeight: "800", marginBottom: 16, letterSpacing: -0.5 },
 });
